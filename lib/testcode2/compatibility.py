@@ -31,6 +31,11 @@ Return True if bool(x) is True for any x in the iterable.'''
             if val:
                 return True
 
+try:
+    import functools
+except ImportError:
+    import testcode2._functools_dummy as functools
+
 ### python 2.5, python 2.5 ###
 
 # math.isnan was introduced in python 2.6, so need a workaround for 2.4 and 2.5.
