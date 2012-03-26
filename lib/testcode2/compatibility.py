@@ -1,16 +1,18 @@
 '''Functions for compatibility with python <2.6.'''
 
+### python 2.4 ###
+
 # Import from the sets module if sets are not part of the language.
 try:
-    set(['abc'])
+    compat_set = set
 except NameError:
-    from sets import Set as set
+    from sets import Set as compat_set
 
 # Any and all don't exist in python <2.5. Define our own in pure python.
 try:
-    all([])
+    compat_all = all
 except NameError:
-    def all(iterable):
+    def compat_all(iterable):
         '''all(iterable) -> bool
 
 Return True if bool(x) is True for all values x in the iterable.'''
@@ -19,15 +21,17 @@ Return True if bool(x) is True for all values x in the iterable.'''
                 return False
         return True
 try:
-    any([])
+    compat_any = any
 except NameError:
-    def any(iterable):
+    def compat_any(iterable):
         '''any(iterable) -> bool
 
 Return True if bool(x) is True for any x in the iterable.'''
         for val in iterable:
             if val:
                 return True
+
+### python 2.5, python 2.5 ###
 
 # math.isnan was introduced in python 2.6, so need a workaround for 2.4 and 2.5.
 try:
