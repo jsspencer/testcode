@@ -13,7 +13,7 @@ class Lock:
             '''Function decorated by Lock.with_lock.'''
             self.lock.acquire()
             try:
-                func(*args, **kwargs)
+                return func(*args, **kwargs)
             finally:
                 self.lock.release()
         return decorated_func
@@ -35,7 +35,8 @@ functions.'''
                 '''Function decorated by Lock.in_dir.'''
                 cwd = os.getcwd()
                 os.chdir(ddir)
-                func(*args, **kwargs)
+                val = func(*args, **kwargs)
                 os.chdir(cwd)
+                return val
             return decorated_func
         return wrapper
