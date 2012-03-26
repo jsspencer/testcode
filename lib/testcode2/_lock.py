@@ -2,6 +2,7 @@
 
 import os
 from threading import Lock as threadingLock
+import testcode2.compatibility as compat
 
 class Lock:
     '''Helper class for working with threading locks.'''
@@ -9,6 +10,7 @@ class Lock:
         self.lock = threadingLock()
     def with_lock(self, func):
         '''Decorate function to be executed whilst holding the lock.'''
+        @compat.functools.wraps(func)
         def decorated_func(*args, **kwargs):
             '''Function decorated by Lock.with_lock.'''
             self.lock.acquire()
@@ -30,6 +32,7 @@ functions.'''
         # decorators at: http://stackoverflow.com/a/1594484
         def wrapper(func):
             '''Wrap func to hold lock whilst being executed in ddir.'''
+            @compat.functools.wraps(func)
             @self.with_lock
             def decorated_func(*args, **kwargs):
                 '''Function decorated by Lock.in_dir.'''
