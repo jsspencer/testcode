@@ -1,5 +1,6 @@
 '''Access to external queueing systems.'''
 
+import os.path
 import subprocess
 import sys
 import time
@@ -26,6 +27,9 @@ implemented.
 Replace pattern in the template file with string and place the result in
 self.submit_file.'''
         # get template
+        if not os.path.exists(template):
+            err = 'Submit file template does not exist: %s.' % (template,)
+            raise exceptions.RunError(err)
         ftemplate = open(template)
         submit = ftemplate.read()
         ftemplate.close()
