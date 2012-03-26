@@ -1,13 +1,13 @@
 '''Threading lock initialisation and helper.'''
 
 import os
-from threading import Lock as threadingLock
+import threading
 import testcode2.compatibility as compat
 
-class Lock:
+class DirLock:
     '''Helper class for working with threading locks.'''
     def __init__(self):
-        self.lock = threadingLock()
+        self.lock = threading.Lock()
     def with_lock(self, func):
         '''Decorate function to be executed whilst holding the lock.'''
         @compat.functools.wraps(func)
