@@ -10,9 +10,10 @@ import testcode2.exceptions as exceptions
 class ClusterQueueJob:
     '''Interface to external queueing system.
 
-submit_file: filename of submit script to be submitted to the queueing system.
-system: name of queueing system.  Currently only an interface to PBS is 
-implemented.
+:param string submit_file: filename of submit script to be submitted to the
+    queueing system.
+:param string system: name of queueing system.  Currently only an interface to
+    PBS is implemented.
 '''
     def __init__(self, submit_file, system='PBS'):
         self.job_id = None
@@ -25,7 +26,12 @@ implemented.
         '''Create a submit file.
         
 Replace pattern in the template file with string and place the result in
-self.submit_file.'''
+self.submit_file.
+
+:param string pattern: string in template to be replaced.
+:param string string: string to replace pattern in template.
+:param string template: filename of file containing the template submit script.
+'''
         # get template
         if not os.path.exists(template):
             err = 'Submit file template does not exist: %s.' % (template,)
@@ -53,7 +59,7 @@ self.submit_file.'''
             err = 'Error submitting job: %s' % (sys.exc_info()[1],)
             raise exceptions.RunError(err)
     def wait(self):
-        'Wait for job to complete.'''
+        '''Returns when job has finished running on the cluster.'''
         retcode = 0
         if self.system == 'PBS':
             qstat_cmd = 'qstat %s' % (self.job_id,)

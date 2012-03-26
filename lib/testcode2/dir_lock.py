@@ -9,7 +9,10 @@ class DirLock:
     def __init__(self):
         self.lock = threading.Lock()
     def with_lock(self, func):
-        '''Decorate function to be executed whilst holding the lock.'''
+        '''Decorate function to be executed whilst holding the lock.
+        
+:param function func: arbitary function.
+'''
         @compat.functools.wraps(func)
         def decorated_func(*args, **kwargs):
             '''Function decorated by Lock.with_lock.'''
@@ -25,13 +28,19 @@ class DirLock:
 The thread executing the function holds the lock whilst entering ddir and
 executing the function.  This makes such actions thread-safe with respect to
 the directory location but is not appropriate for computationally-demanding
-functions.'''
+functions.
+        
+:param string ddir: directory in which the decorated function is executed.
+'''
         # Because we wish to use this as a decorator with arguments passed to
         # the decorator, we must return a wrapper function which in turn
         # returns the decorated function.  See the excellent explanation of
         # decorators at: http://stackoverflow.com/a/1594484
         def wrapper(func):
-            '''Wrap func to hold lock whilst being executed in ddir.'''
+            '''Wrap func to hold lock whilst being executed in ddir.
+            
+:param string func: arbitrary function.
+'''
             @compat.functools.wraps(func)
             @self.with_lock
             def decorated_func(*args, **kwargs):

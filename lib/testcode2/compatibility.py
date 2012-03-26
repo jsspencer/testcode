@@ -15,7 +15,8 @@ except NameError:
     def compat_all(iterable):
         '''all(iterable) -> bool
 
-Return True if bool(x) is True for all values x in the iterable.'''
+Return True if bool(x) is True for all values x in the iterable.
+'''
         for val in iterable:
             if not val:
                 return False
@@ -26,7 +27,8 @@ except NameError:
     def compat_any(iterable):
         '''any(iterable) -> bool
 
-Return True if bool(x) is True for any x in the iterable.'''
+Return True if bool(x) is True for any x in the iterable.
+'''
         for val in iterable:
             if val:
                 return True
@@ -45,6 +47,9 @@ except ImportError:
     def isnan(val):
         '''Return True if x is a NaN (not a number), and False otherwise.
 
+:param float val: number.
+
 Replacement for math.isnan for python <2.6.
-This is not guaranteed to be portable, but does work under Linux.'''
+This is not guaranteed to be portable, but does work under Linux.
+'''
         return type(val) is float and val != val

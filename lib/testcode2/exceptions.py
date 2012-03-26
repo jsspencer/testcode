@@ -3,9 +3,9 @@
 import signal
 import sys
 
-def signal_handler(interrupt_signal, frame):
-    '''Capture interupt signal and leave quietly.'''
-    print('Signal: %s has been caught.  Bye!' % (interrupt_signal))
+def signal_handler(sig, frame):
+    '''Capture signal and leave quietly.'''
+    print('Signal: %s has been caught.  Bye!' % (sig))
     sys.exit(1)
 
 
