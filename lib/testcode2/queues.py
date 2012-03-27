@@ -48,7 +48,7 @@ self.submit_file.
     def start_job(self):
         '''Submit job to cluster queue.'''
         if self.system == 'PBS':
-            submit_cmd = 'qsub %s' % (self.submit_file)
+            submit_cmd = ['qsub', self.submit_file]
         try:
             submit_popen = subprocess.Popen(submit_cmd, stdout=subprocess.PIPE,
                                             stderr=subprocess.STDOUT)
@@ -62,7 +62,7 @@ self.submit_file.
         '''Returns when job has finished running on the cluster.'''
         retcode = 0
         if self.system == 'PBS':
-            qstat_cmd = 'qstat %s' % (self.job_id,)
+            qstat_cmd = ['qstat', self.job_id]
         while retcode == 0:
             time.sleep(60)
             # TODO: improve this by examining output from qstat/equivalent
