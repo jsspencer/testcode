@@ -19,32 +19,31 @@ FILESTEM = dict(
 
 class TestProgram:
     '''Store and access information about the program being tested.'''
-    def __init__(self, exe, run_cmd_template, test_id, launch_parallel=None,
-                       submit_template=None, ignore_fields=None, data_tag=None,
-                       extract_cmd=None, verifier_cmd=None, make=None,
-                       vcs=None):
+    def __init__(self, exe, run_cmd_template, test_id, **kwargs):
+
+        # Set null defaults for keyword arguments.
 
         # Running
         self.exe = exe
-        self.launch_parallel = launch_parallel
         self.run_cmd_template = run_cmd_template
-        self.submit_template = submit_template
         self.test_id = test_id
+        self.launch_parallel = None
+        self.submit_template = None
 
         # Analysis
-        if ignore_fields:
-            self.ignore_fields = ignore_fields
-        else:
-            self.ignore_fields = []
-        self.data_tag = data_tag
-        self.extract_cmd = extract_cmd
-        self.verifier_cmd = verifier_cmd
+        self.ignore_fields = []
+        self.data_tag = None
+        self.extract_cmd = None
+        self.verifier_cmd = None
 
         # Building
-        self.make = make
+        self.make = None
 
         # Info
-        self.vcs = vcs
+        self.vcs = None
+
+        for (attr, val) in kwargs.items():
+            setattr(self, attr, val)
 
     def run_cmd(self, input_file, args, nprocs):
         '''Create run command.'''
