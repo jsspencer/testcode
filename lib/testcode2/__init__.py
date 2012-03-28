@@ -39,9 +39,6 @@ class TestProgram:
         self.extract_args = ''
         self.verify = False
 
-        # Building
-        self.make = None
-
         # Info
         self.vcs = None
 
