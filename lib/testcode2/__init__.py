@@ -20,22 +20,24 @@ FILESTEM = dict(
 
 class TestProgram:
     '''Store and access information about the program being tested.'''
-    def __init__(self, exe, run_cmd_template, test_id, **kwargs):
+    def __init__(self, exe, test_id, **kwargs):
 
         # Set null defaults for keyword arguments.
 
         # Running
         self.exe = exe
-        self.run_cmd_template = run_cmd_template
         self.test_id = test_id
+        self.run_cmd_template = 'tc.program tc.input > tc.output 2> tc.error'
         self.launch_parallel = None
         self.submit_template = None
 
         # Analysis
         self.ignore_fields = []
         self.data_tag = None
+        self.extract_cmd_template = 'tc.extract tc.file'
         self.extract_cmd = None
-        self.verifier_cmd = None
+        self.extract_args = ''
+        self.verify = False
 
         # Building
         self.make = None
@@ -52,13 +54,13 @@ class TestProgram:
                                         input_file, args)
         error_file = util.testcode_filename(FILESTEM['error'], self.test_id,
                                        input_file, args)
-        cmd = self.run_cmd_template.replace('testcode.program', self.exe)
+        cmd = self.run_cmd_template.replace('tc.program', self.exe)
         if input_file:
-            cmd = cmd.replace('testcode.input', input_file)
+            cmd = cmd.replace('tc.input', input_file)
         if args:
-            cmd = cmd.replace('testcode.args', args)
-        cmd = cmd.replace('testcode.output', output_file)
-        cmd = cmd.replace('testcode.error', error_file)
+            cmd = cmd.replace('tc.args', args)
+        cmd = cmd.replace('tc.output', output_file)
+        cmd = cmd.replace('tc.error', error_file)
         if nprocs != 0 and self.launch_parallel:
             cmd = '%s -np %s %s' % (self.launch_parallel, nprocs, cmd)
         return cmd
