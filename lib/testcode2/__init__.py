@@ -9,6 +9,7 @@ import testcode2.dir_lock as dir_lock
 import testcode2.exceptions as exceptions
 import testcode2.queues  as queues
 import testcode2.compatibility as compat
+import testcode2.util as util
 
 DIR_LOCK = dir_lock.DirLock()
 FILESTEM = dict(
@@ -47,9 +48,9 @@ class TestProgram:
 
     def run_cmd(self, input_file, args, nprocs):
         '''Create run command.'''
-        output_file = testcode_filename(FILESTEM['test'], self.test_id,
+        output_file = util.testcode_filename(FILESTEM['test'], self.test_id,
                                         input_file, args)
-        error_file = testcode_filename(FILESTEM['error'], self.test_id,
+        error_file = util.testcode_filename(FILESTEM['error'], self.test_id,
                                        input_file, args)
         cmd = self.run_cmd_template.replace('testcode.program', self.exe)
         if input_file:
@@ -95,6 +96,8 @@ class Test:
         try:
             # Construct tests.
             test_cmds = []
+            test_files = []
+            bench_files = []
             for (test_input, test_arg) in self.inputs_args:
                 if (test_input and 
                         not os.path.exists(os.path.join(self.path,test_input))):
@@ -102,17 +105,18 @@ class Test:
                     raise exceptions.RunError(err)
                 test_cmds.append(self.test_program.run_cmd(test_input, test_arg,
                                                            self.nprocs))
+                test_files.append(util.testcode_filename(FILESTEM['test'],
+                        self.test_program.test_id, test_input, test_arg))
+                bench_files.append(util.testcode_filename(FILESTEM['benchmark'],
+                    self.test_program.test_id, test_input, test_arg))
 
             # Run tests one-at-a-time locally or submit job in single submit
             # file to a queueing system.
             if cluster_queue:
                 if self.output:
                     for (ind, test) in enumerate(test_cmds):
-                        test_file = testcode_filename(FILESTEM['test'],
-                                self.test_program.test_id,
-                                *self.inputs_args[ind])
                         test_cmds[ind] = '%s; mv %s %s' % (test_cmds[ind],
-                                self.output, test_file)
+                                self.output, test_files[ind])
                 test_cmds = ['\n'.join(test_cmds)]
             for (ind, test) in enumerate(test_cmds):
                 print(test, cluster_queue, verbose)
@@ -122,23 +126,13 @@ class Test:
                 if cluster_queue:
                     # Did all of them at once.
                     for (test_input, test_arg) in self.inputs_args:
-                        test_file = testcode_filename(FILESTEM['test'],
-                                self.test_program.test_id, 
-                                test_input, test_arg)
-                        bench_file = testcode_filename(FILESTEM['benchmark'],
-                                self.test_program.test_id, 
-                                test_input, test_arg)
                         (passed, msg) = self.verify_job(verbose)
                         self.print_job_success(verbose, passed, msg)
                 else:
                     # Did one job at a time.
                     (test_input, test_arg) = self.inputs_args[ind]
-                    test_file = testcode_filename(FILESTEM['test'],
-                            self.test_program.test_id, test_input, test_arg)
-                    bench_file = testcode_filename(FILESTEM['benchmark'],
-                        self.test_program.test_id, test_input, test_arg)
                     if self.output:
-                        shutil.move(self.output, test_file)
+                        shutil.move(self.output, test_files[ind])
                     (passed, msg) = self.verify_job(verbose)
                     self.print_job_success(verbose, passed, msg)
         except exceptions.RunError:
@@ -209,13 +203,3 @@ initialisation.'''
     def print_job_success(self, passed, verbose, msg):
         '''Print output from comparing test job to benchmark.'''
         pass
-
-def testcode_filename(stem, test_id, inp, args):
-    '''Construct filename in testcode format.'''
-    filename = '%s.%s' % (stem, test_id)
-    if inp:
-        filename = '%s.inp=%s' % (filename, inp)
-    if args:
-        args_string = args.replace(' ','_')
-        filename = '%s.args=%s' % (filename, args_string)
-    return filename
