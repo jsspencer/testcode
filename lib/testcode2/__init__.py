@@ -156,8 +156,6 @@ threads.
 Decorated to acquire directory lock and enter self.path during
 initialisation.'''
 
-        print('in dir: %s' % os.getcwd())
-
         if cluster_queue:
             tp_ptr = self.test_program
             submit_file = '%s.%s' % (tp_ptr.submit_template, tp_ptr.test_id)
