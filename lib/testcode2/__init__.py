@@ -1,6 +1,7 @@
 '''testcode2, a framework for regression testing numerical programs.'''
 
 import os
+import pipes
 import shutil
 import subprocess
 import sys
@@ -51,11 +52,22 @@ class TestProgram:
                                         input_file, args)
         error_file = util.testcode_filename(FILESTEM['error'], self.test_id,
                                        input_file, args)
-        cmd = self.run_cmd_template.replace('tc.program', self.exe)
-        if input_file:
+
+        # Need to escape filenames for passing them to the shell.
+        exe = pipes.quote(self.exe)
+        output_file = pipes.quote(output_file)
+        error_file = pipes.quote(error_file)
+
+        cmd = self.run_cmd_template.replace('tc.program', exe)
+        if type(input_file) is str:
+            input_file = pipes.quote(input_file)
             cmd = cmd.replace('tc.input', input_file)
-        if args:
+        else:
+            cmd = cmd.replace('tc.input', '')
+        if type(args) is str:
             cmd = cmd.replace('tc.args', args)
+        else:
+            cmd = cmd.replace('tc.args', '')
         cmd = cmd.replace('tc.output', output_file)
         cmd = cmd.replace('tc.error', error_file)
         if nprocs != 0 and self.launch_parallel:
@@ -115,7 +127,8 @@ class Test:
                 if self.output:
                     for (ind, test) in enumerate(test_cmds):
                         test_cmds[ind] = '%s; mv %s %s' % (test_cmds[ind],
-                                self.output, test_files[ind])
+                                pipes.quote(self.output),
+                                pipes.quote(test_files[ind]))
                 test_cmds = ['\n'.join(test_cmds)]
             for (ind, test) in enumerate(test_cmds):
                 print(test, cluster_queue, verbose)
