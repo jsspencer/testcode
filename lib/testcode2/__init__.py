@@ -46,7 +46,7 @@ class TestProgram:
         for (attr, val) in kwargs.items():
             setattr(self, attr, val)
 
-    def run_cmd(self, input_file, args, nprocs):
+    def run_cmd(self, input_file, args, nprocs=0):
         '''Create run command.'''
         output_file = util.testcode_filename(FILESTEM['test'], self.test_id,
                                         input_file, args)
