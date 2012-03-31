@@ -28,7 +28,7 @@ class TestProgram:
         # Running
         self.exe = exe
         self.test_id = test_id
-        self.run_cmd_template = 'tc.program tc.input > tc.output 2> tc.error'
+        self.run_cmd_template = 'tc.program tc.args tc.input > tc.output 2> tc.error'
         self.launch_parallel = None
         self.submit_template = None
 
