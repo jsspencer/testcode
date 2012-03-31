@@ -50,9 +50,9 @@ class TestProgram:
     def run_cmd(self, input_file, args, nprocs=0):
         '''Create run command.'''
         output_file = util.testcode_filename(FILESTEM['test'], self.test_id,
-                                        input_file, args)
+                input_file, args)
         error_file = util.testcode_filename(FILESTEM['error'], self.test_id,
-                                       input_file, args)
+                input_file, args)
 
         # Need to escape filenames for passing them to the shell.
         exe = pipes.quote(self.exe)
