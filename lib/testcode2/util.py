@@ -1,8 +1,8 @@
 '''Utility functions.'''
 
-def testcode_filename(stem, test_id, inp, args):
+def testcode_filename(stem, file_id, inp, args):
     '''Construct filename in testcode format.'''
-    filename = '%s.%s' % (stem, test_id)
+    filename = '%s.%s' % (stem, file_id)
     if inp:
         filename = '%s.inp=%s' % (filename, inp)
     if args:
