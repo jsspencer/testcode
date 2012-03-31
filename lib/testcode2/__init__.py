@@ -36,8 +36,8 @@ class TestProgram:
         self.benchmark = benchmark
         self.ignore_fields = []
         self.data_tag = None
-        self.extract_cmd_template = 'tc.extract tc.file'
-        self.extract_cmd = None
+        self.extract_cmd_template = 'tc.extract tc.args tc.file'
+        self.extract_program = None
         self.extract_args = ''
         self.verify = False
 
@@ -74,6 +74,27 @@ class TestProgram:
         if nprocs != 0 and self.launch_parallel:
             cmd = '%s -np %s %s' % (self.launch_parallel, nprocs, cmd)
         return cmd
+
+    def extract_cmd(self, input_file, args):
+        '''Create extraction command(s).'''
+        test_file = util.testcode_filename(FILESTEM['test'], self.test_id,
+                input_file, args)
+        bench_file = util.testcode_filename(FILESTEM['benchmark'],
+                self.benchmark, input_file, args)
+        cmd = self.extract_cmd_template
+        cmd = cmd.replace('tc.extract', pipes.quote(self.extract_program))
+        cmd = cmd.replace('tc.args', self.extract_args)
+        if self.verify:
+            # Single command to compare benchmark and test outputs.
+            cmd = cmd.replace('tc.test', pipes.quote(test_file))
+            cmd = cmd.replace('tc.bench', pipes.quote(bench_file))
+            return (cmd,)
+        else:
+            # Need to return commands to extract data from the test and
+            # benchmark outputs.
+            test_cmd = cmd.replace('tc.file', pipes.quote(test_file))
+            bench_cmd = cmd.replace('tc.file', pipes.quote(bench_file))
+            return (bench_cmd, test_cmd)
 
 class Test:
     '''Store and execute a test.'''
