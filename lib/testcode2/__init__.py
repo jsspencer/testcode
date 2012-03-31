@@ -223,7 +223,7 @@ Decorated as verify_job_external to acquire directory lock and enter self.path
 during initialisation.'''
         pass
 
-    def _extract_data(self, output):
+    def _extract_data(self, input_file, args, verbose=True):
         '''Extract data from output file.  Requires directory lock.
 
 IMPORTANT: use self.extract_data rather than self._extract_data if using
@@ -231,7 +231,26 @@ multiple threads.
 
 Decorated as extract_data to acquire directory lock and enter self.path during
 initialisation.'''
-        pass
+
+        # Get extraction commands.
+        extract_cmds = self.test_program.extract_cmd(input_file, args)
+
+        # Extract data.
+        outputs = []
+        for cmd in extract_cmds:
+            try:
+                if verbose:
+                    print('Analysing output using %s in %s.' % (cmd, self.path))
+                extract_popen = subprocess.Popen(cmd, shell=True,
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                extract_popen.wait()
+            except OSError:
+                # slightly odd syntax in order to be compatible with python 2.5
+                # and python 2.6/3
+                err = 'Execution of test failed: %s' % (sys.exc_info()[1],)
+                raise exceptions.RunError(err)
+            outputs.append(extract_popen.communicate()[0])
+        return outputs
 
     def print_job_success(self, passed, verbose, msg):
         '''Print output from comparing test job to benchmark.'''
