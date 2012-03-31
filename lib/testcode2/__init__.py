@@ -213,7 +213,7 @@ initialisation.'''
         '''Check job against benchmark.'''
         pass
 
-    def _verify_job_external(self):
+    def _verify_job_external(self, input_file, args, verbose=True):
         '''Run user-supplied verifier script.  Requires directory lock.
 
 IMPORTANT: use self.verify_external rather than self._verify_job_external if
@@ -221,7 +221,24 @@ using multiple threads.
 
 Decorated as verify_job_external to acquire directory lock and enter self.path
 during initialisation.'''
-        pass
+        verify_cmd = self.test_program.extract_cmd(input_file, args)[0]
+        try:
+            if verbose:
+                print('Analysing test using %s in %s.' %
+                        (verify_cmd, self.path))
+            verify_popen = subprocess.Popen(verify_cmd, shell=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            verify_popen.wait()
+        except OSError:
+            # slightly odd syntax in order to be compatible with python 2.5
+            # and python 2.6/3
+            err = 'Execution of test failed: %s' % (sys.exc_info()[1],)
+            raise exceptions.RunError(err)
+        output = verify_popen.communicate()[0]
+        if verify_popen.returncode == 0:
+            return (True, output)
+        else:
+            return (False, output)
 
     def _extract_data(self, input_file, args, verbose=True):
         '''Extract data from output file.  Requires directory lock.
