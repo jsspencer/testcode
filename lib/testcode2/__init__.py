@@ -21,7 +21,7 @@ FILESTEM = dict(
 
 class TestProgram:
     '''Store and access information about the program being tested.'''
-    def __init__(self, exe, test_id, **kwargs):
+    def __init__(self, exe, test_id, benchmark, **kwargs):
 
         # Set null defaults for keyword arguments.
 
@@ -33,6 +33,7 @@ class TestProgram:
         self.submit_template = None
 
         # Analysis
+        self.benchmark = benchmark
         self.ignore_fields = []
         self.data_tag = None
         self.extract_cmd_template = 'tc.extract tc.file'
