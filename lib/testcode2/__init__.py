@@ -153,7 +153,6 @@ class Test:
                                 pipes.quote(test_files[ind]))
                 test_cmds = ['\n'.join(test_cmds)]
             for (ind, test) in enumerate(test_cmds):
-                print(test, cluster_queue, verbose)
                 job = self.start_job(test) #, cluster_queue, verbose)
                 job.wait()
                 # Analyse tests as they finish.
