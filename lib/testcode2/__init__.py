@@ -250,24 +250,42 @@ multiple threads.
 Decorated as extract_data to acquire directory lock and enter self.path during
 initialisation.'''
 
-        # Get extraction commands.
-        extract_cmds = self.test_program.extract_cmd(input_file, args)
+        tp_ptr = self.test_program
+        if tp_ptr.data_tag:
+            # Using internal data extraction function.
+            data_files = [
+                    util.testcode_filename(FILESTEM['test'],
+                            tp_ptr.test_id, input_file, args),
+                    util.testcode_filename(FILESTEM['benchmark'],
+                            tp_ptr.benchmark, input_file, args),
+                         ]
+            outputs = [util.extract_tagged_data(tp_ptr.data_tag, dfile)
+                    for dfile in data_files]
+        else:
+            # Using external data extraction script.
+            # Get extraction commands.
+            extract_cmds = self.test_program.extract_cmd(input_file, args)
 
-        # Extract data.
-        outputs = []
-        for cmd in extract_cmds:
-            try:
-                if verbose:
-                    print('Analysing output using %s in %s.' % (cmd, self.path))
-                extract_popen = subprocess.Popen(cmd, shell=True,
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                extract_popen.wait()
-            except OSError:
-                # slightly odd syntax in order to be compatible with python 2.5
-                # and python 2.6/3
-                err = 'Execution of test failed: %s' % (sys.exc_info()[1],)
-                raise exceptions.RunError(err)
-            outputs.append(extract_popen.communicate()[0])
+            # Extract data.
+            outputs = []
+            for cmd in extract_cmds:
+                try:
+                    if verbose:
+                        print('Analysing output using %s in %s.' %
+                                (cmd, self.path))
+                    extract_popen = subprocess.Popen(cmd, shell=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    extract_popen.wait()
+                except OSError:
+                    # slightly odd syntax in order to be compatible with python
+                    # 2.5 and python 2.6/3
+                    err = 'Analysing output failed: %s' % (sys.exc_info()[1],)
+                    raise exceptions.RunError(err)
+                # Convert data string from extract command to dictionary format.
+                outputs.append(
+                        util.dict_table_string(extract_popen.communicate()[0])
+                              )
+
         return outputs
 
     def print_job_success(self, passed, verbose, msg):
