@@ -59,3 +59,49 @@ def extract_tagged_data(data_tag, filename):
             else:
                 data[key] = [val]
     return [data]
+
+def dict_table_string(table_string):
+    '''Read a data table from a string into a dictionary.
+
+The first row and any subsequent rows containing no numbers are assumed to form
+headers of a subtable, and so form the keys for the subsequent subtable.
+
+Values, where possible, are converted to floats.
+
+e.g. a  b  c  a  ->   [{'a':(1,4,7,8), 'b':(2,5), 'c':(3,6)}]
+     1  2  3  7
+     4  5  6  8
+and
+     a  b  c   ->   [{'a':(1,4), 'b':(2,5), 'c':(3,6)},{'a':(7), 'b':(8), 'd'(9)}]
+     1  2  3
+     4  5  6
+     a  b  d
+     7  8  9
+'''
+    data = [i.split() for i in table_string.splitlines()]
+    # Convert to numbers where appropriate
+    data = [[try_floatify(val) for val in dline] for dline in data]
+    data_dict = []
+    for dline in data:
+        # Test if all items are strings; if so start a new subtable.
+        # We actually test if all items are not floats, as python 3 can return
+        # a bytes variable from subprocess whereas (e.g.) python 2.4 returns a
+        #  str.  Testing for this is problematic as the bytes type does not
+        # exist in python 2.4.  Fortunately we have converted all items to
+        # floats if possible, so can just test for the inverse condition...
+        if all(type(val) is not float for val in dline):
+            # header of new subtable
+            head = dline
+            data_dict.append(dict((val, []) for val in dline))
+        else:
+            for (ind, val) in enumerate(dline):
+                # Add data to appropriate key.
+                # Note that this handles the case where the same column heading
+                # occurs multiple times in the same subtable and does not
+                # overwrite the previous column with the same heading.
+                data_dict[-1][head[ind]].append(val)
+    # We shouldn't change the data from this point: convert entries to tuples.
+    for data in data_dict:
+        for (key, val) in data.items():
+            data[key] = tuple(val)
+    return data_dict
