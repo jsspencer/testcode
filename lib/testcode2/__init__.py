@@ -286,4 +286,4 @@ initialisation.'''
                         util.dict_table_string(extract_popen.communicate()[0])
                               )
 
-        return outputs
+        return tuple(outputs)
