@@ -58,6 +58,9 @@ def extract_tagged_data(data_tag, filename):
                 data[key].append(val)
             else:
                 data[key] = [val]
+    # We shouldn't change the data from this point: convert entries to tuples.
+    for (key, val) in data.items():
+        data[key] = tuple(val)
     return [data]
 
 def dict_table_string(table_string):
