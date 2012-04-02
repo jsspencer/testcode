@@ -287,7 +287,3 @@ initialisation.'''
                               )
 
         return outputs
-
-    def print_job_success(self, passed, verbose, msg):
-        '''Print output from comparing test job to benchmark.'''
-        pass

@@ -2,6 +2,7 @@
 
 import os.path
 import re
+import sys
 
 import testcode2.compatibility as compat
 import testcode2.exceptions as exceptions
@@ -109,3 +110,19 @@ and
         for (key, val) in data.items():
             data[key] = tuple(val)
     return data_dict
+
+def print_success(passed, msg, verbose):
+    '''Print output from comparing test job to benchmark.'''
+    if verbose:
+        if passed:
+            print('Passed.')
+        else:
+            print('**FAILED**.')
+        if msg:
+            print(msg)
+    else:
+        if passed:
+            sys.stdout.write('.')
+        else:
+            sys.stdout.write('F')
+        sys.stdout.flush()
