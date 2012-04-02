@@ -3,6 +3,7 @@
 import os.path
 import re
 
+import testcode2.compatibility as compat
 import testcode2.exceptions as exceptions
 
 def testcode_filename(stem, file_id, inp, args):
@@ -92,7 +93,7 @@ and
         #  str.  Testing for this is problematic as the bytes type does not
         # exist in python 2.4.  Fortunately we have converted all items to
         # floats if possible, so can just test for the inverse condition...
-        if all(type(val) is not float for val in dline):
+        if compat.compat_all(type(val) is not float for val in dline):
             # header of new subtable
             head = dline
             data_dict.append(dict((val, []) for val in dline))
