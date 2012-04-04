@@ -112,6 +112,45 @@ and
         data_dict[key] = tuple(val)
     return data_dict
 
+def pretty_print_table(labels, dicts):
+    '''Print data in dictionaries of identical size in a tabular format.'''
+    # Loop through all elements in order to calculate the field width.
+    label_width = max(len(str(label)) for label in labels)
+    field_width = {}
+    fmt = dict(label='%%-%is' % (label_width))
+    header = [fmt['label'] % ('')]
+    for key in sorted(dicts[0].keys()):
+        field_width[key] = len(str(key))
+        nitems = 1
+        if type(dicts[0][key]) is tuple or type(dicts[0][key]) is list:
+            nitems = len(dicts[0][key])
+            for dval in dicts:
+                for item in dval[key]:
+                    field_width[key] = max(field_width[key], len(str(item)))
+        else:
+            field_width[key] = max(len(str(dval[key])) for dval in dicts)
+            field_width[key] = max(field_width[key], len(str(key)))
+        fmt[key] = '%%-%is' % (field_width[key])
+        for item in range(nitems):
+            header.append(fmt[key] % (key))
+    # printing without a new line is different in python 2 and python 3, so for
+    # ease we construct the formatting for the line and then print it.
+    lines = [ header ]
+    for (ind, label) in enumerate(labels):
+        line = [fmt['label'] % (label)]
+        dval = dicts[ind]
+        for key in sorted(dval.keys()):
+            if type(dval[key]) is tuple or type(dval[key]) is list:
+                for item in range(len(dval[key])):
+                    line.append(fmt[key] % (dval[key][item]))
+            else:
+                line.append(fmt[key] % (dval[key]))
+        lines.extend([line])
+    # Now actually form table.
+    lines = ['  '.join(line) for line in lines]
+    table = '\n'.join(lines)
+    return table
+
 def print_success(passed, msg, verbose):
     '''Print output from comparing test job to benchmark.'''
     if verbose:
