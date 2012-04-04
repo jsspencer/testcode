@@ -120,9 +120,7 @@ class Test:
         # syntactic sugar.  Fortunately we can still modify them at
         # initialisation time.  Thank you python for closures!
         self.start_job = DIR_LOCK.in_dir(self.path)(self._start_job)
-        self.extract_data = DIR_LOCK.in_dir(self.path)(self._extract_data)
-        self.verify_job_external = DIR_LOCK.in_dir(self.path)(
-                                               self._verify_job_external)
+        self.verify_job = DIR_LOCK.in_dir(self.path)(self._verify_job)
 
     def run_test(self, verbose=True, cluster_queue=None):
         '''Run all jobs in test.'''
@@ -133,7 +131,7 @@ class Test:
             test_files = []
             bench_files = []
             for (test_input, test_arg) in self.inputs_args:
-                if (test_input and 
+                if (test_input and
                         not os.path.exists(os.path.join(self.path,test_input))):
                     err = 'Input file does not exist: %s' % (test_input,)
                     raise exceptions.RunError(err)
@@ -154,26 +152,28 @@ class Test:
                                 pipes.quote(test_files[ind]))
                 test_cmds = ['\n'.join(test_cmds)]
             for (ind, test) in enumerate(test_cmds):
-                job = self.start_job(test) #, cluster_queue, verbose)
+                job = self.start_job(test, cluster_queue, verbose)
                 job.wait()
                 # Analyse tests as they finish.
                 if cluster_queue:
                     # Did all of them at once.
                     for (test_input, test_arg) in self.inputs_args:
-                        (passed, msg) = self.verify_job(verbose)
-                        self.print_job_success(verbose, passed, msg)
+                        (passed, msg) = self.verify_job(test_input, test_arg,
+                                verbose)
+                        util.print_success(passed, msg, verbose)
                 else:
                     # Did one job at a time.
                     (test_input, test_arg) = self.inputs_args[ind]
                     if self.output:
                         shutil.move(self.output, test_files[ind])
-                    (passed, msg) = self.verify_job(verbose)
-                    self.print_job_success(verbose, passed, msg)
+                    (passed, msg) = self.verify_job(test_input, test_arg,
+                            verbose)
+                    util.print_success(passed, msg, verbose)
         except exceptions.RunError:
             err = sys.exc_info()[1]
             err = 'Test(s) in %s failed.\n%s' % (self.path, err)
             print(err) # TEMP
-            self.print_job_success(verbose, False, err)
+            util.print_success(False, err, verbose)
 
     def _start_job(self, cmd, cluster_queue=None, verbose=True):
         '''Start test running.  Requires directory lock.
@@ -181,14 +181,14 @@ class Test:
 IMPORTANT: use self.start_job rather than self._start_job if using multiple
 threads.
 
-Decorated to acquire directory lock and enter self.path during
-initialisation.'''
+Decorated to verify_job, which acquires directory lock and enters self.path
+first, during initialisation.'''
 
         if cluster_queue:
             tp_ptr = self.test_program
             submit_file = '%s.%s' % (tp_ptr.submit_template, tp_ptr.test_id)
             job = queues.ClusterQueueJob(submit_file, system=cluster_queue)
-            job.create_submit_file(tp_ptr.submit_pattern, cmd, 
+            job.create_submit_file(tp_ptr.submit_pattern, cmd,
                                    tp_ptr.submit_template)
             if verbose:
                 print('Submitting tests using %s (template submit file) in %s'
@@ -210,18 +210,28 @@ initialisation.'''
         # a wait method which returns only once job has finished.
         return job
 
-    def verify_job(self, verbose=True):
-        '''Check job against benchmark.'''
-        pass
+    def _verify_job(self, input_file, args, verbose=True):
+        '''Check job against benchmark.
 
-    def _verify_job_external(self, input_file, args, verbose=True):
-        '''Run user-supplied verifier script.  Requires directory lock.
+Assume function is executed in self.path.
 
-IMPORTANT: use self.verify_external rather than self._verify_job_external if
-using multiple threads.
+IMPORTANT: use self.verify_job rather than self._verify_job if using multiple
+threads.
 
-Decorated as verify_job_external to acquire directory lock and enter self.path
-during initialisation.'''
+Decorated to verify_job, which acquires directory lock and enters self.path
+first, during initialisation.'''
+        if self.test_program.verify:
+            return self.verify_job_external(input_file, args, verbose)
+        else:
+            outputs = self.extract_data(input_file, args, verbose)
+            # TODO: compare outputs
+            print(outputs)
+            return (True, '')
+
+    def verify_job_external(self, input_file, args, verbose=True):
+        '''Run user-supplied verifier script.
+
+Assume function is executed in self.path.'''
         verify_cmd = self.test_program.extract_cmd(input_file, args)[0]
         try:
             if verbose:
@@ -241,15 +251,10 @@ during initialisation.'''
         else:
             return (False, output)
 
-    def _extract_data(self, input_file, args, verbose=True):
-        '''Extract data from output file.  Requires directory lock.
+    def extract_data(self, input_file, args, verbose=True):
+        '''Extract data from output file.
 
-IMPORTANT: use self.extract_data rather than self._extract_data if using
-multiple threads.
-
-Decorated as extract_data to acquire directory lock and enter self.path during
-initialisation.'''
-
+Assume function is executed in self.path.'''
         tp_ptr = self.test_program
         if tp_ptr.data_tag:
             # Using internal data extraction function.
