@@ -172,7 +172,6 @@ class Test:
         except exceptions.RunError:
             err = sys.exc_info()[1]
             err = 'Test(s) in %s failed.\n%s' % (self.path, err)
-            print(err) # TEMP
             util.print_success(False, err, verbose)
 
     def _start_job(self, cmd, cluster_queue=None, verbose=True):
@@ -181,7 +180,7 @@ class Test:
 IMPORTANT: use self.start_job rather than self._start_job if using multiple
 threads.
 
-Decorated to verify_job, which acquires directory lock and enters self.path
+Decorated to start_job, which acquires directory lock and enters self.path
 first, during initialisation.'''
 
         if cluster_queue:
