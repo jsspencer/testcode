@@ -11,6 +11,7 @@ import testcode2.exceptions as exceptions
 import testcode2.queues  as queues
 import testcode2.compatibility as compat
 import testcode2.util as util
+import testcode2.validation as validation
 
 DIR_LOCK = dir_lock.DirLock()
 FILESTEM = dict(
@@ -111,7 +112,9 @@ class Test:
         self.nprocs = 0
 
         # Analysis
-        self.tolerance = None
+        self.default_tolerance = None
+        self.tolerances = {}
+        self.status = dict(passed=0, ran=0)
 
         # 'Decorate' functions which require a directory lock in order for file
         # access to be thread-safe.
@@ -160,6 +163,7 @@ class Test:
                     for (test_input, test_arg) in self.inputs_args:
                         (passed, msg) = self.verify_job(test_input, test_arg,
                                 verbose)
+                        self.update_status(passed)
                         util.print_success(passed, msg, verbose)
                 else:
                     # Did one job at a time.
@@ -168,10 +172,12 @@ class Test:
                         shutil.move(self.output, test_files[ind])
                     (passed, msg) = self.verify_job(test_input, test_arg,
                             verbose)
+                    self.update_status(passed)
                     util.print_success(passed, msg, verbose)
         except exceptions.RunError:
             err = sys.exc_info()[1]
             err = 'Test(s) in %s failed.\n%s' % (self.path, err)
+            self.update_status(False)
             util.print_success(False, err, verbose)
 
     def _start_job(self, cmd, cluster_queue=None, verbose=True):
@@ -222,10 +228,26 @@ first, during initialisation.'''
         if self.test_program.verify:
             return self.verify_job_external(input_file, args, verbose)
         else:
-            outputs = self.extract_data(input_file, args, verbose)
-            # TODO: compare outputs
-            print(outputs)
-            return (True, '')
+            (bench_out, test_out) = self.extract_data(input_file, args, verbose)
+            (status, msg) = validation.compare_data(bench_out, test_out,
+                    self.default_tolerance, self.tolerances)
+            if status < 0:
+                # Print dictionaries separately.
+                data_table = '\n'.join((
+                            util.pretty_print_table(['benchmark'], [bench_out]),
+                            util.pretty_print_table(['test     '], [test_out])))
+            else:
+                # Combine test and benchmark dictionaries.
+                data_table = util.pretty_print_table( ['benchmark', 'test'],
+                                                      [bench_out, test_out])
+            passed = status == 0
+            if msg.strip():
+                # join data table with error message from
+                # validation.compare_data.
+                msg = '\n'.join((msg, data_table))
+            else:
+                msg = data_table
+            return (passed, msg)
 
     def verify_job_external(self, input_file, args, verbose=True):
         '''Run user-supplied verifier script.
@@ -291,3 +313,9 @@ Assume function is executed in self.path.'''
                               )
 
         return tuple(outputs)
+
+    def update_status(self, passed):
+        '''Update self.status with success of a test.'''
+        self.status['ran'] += 1
+        if passed:
+            self.status['passed'] += 1
