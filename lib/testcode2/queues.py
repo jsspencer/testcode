@@ -53,7 +53,7 @@ self.submit_file.
             submit_popen = subprocess.Popen(submit_cmd, stdout=subprocess.PIPE,
                                             stderr=subprocess.STDOUT)
             submit_popen.wait()
-            self.job_id = submit_popen.communicate()[0].strip()
+            self.job_id = submit_popen.communicate()[0].strip().decode('utf-8')
         except OSError:
             # 'odd' syntax so exceptions work with python 2.5 and python 2.6/3.
             err = 'Error submitting job: %s' % (sys.exc_info()[1],)

@@ -91,7 +91,7 @@ and
         # Test if all items are strings; if so start a new subtable.
         # We actually test if all items are not floats, as python 3 can return
         # a bytes variable from subprocess whereas (e.g.) python 2.4 returns a
-        #  str.  Testing for this is problematic as the bytes type does not
+        # str.  Testing for this is problematic as the bytes type does not
         # exist in python 2.4.  Fortunately we have converted all items to
         # floats if possible, so can just test for the inverse condition...
         if compat.compat_all(type(val) is not float for val in dline):

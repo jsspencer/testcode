@@ -266,7 +266,7 @@ Assume function is executed in self.path.'''
             # and python 2.6/3
             err = 'Execution of test failed: %s' % (sys.exc_info()[1],)
             raise exceptions.RunError(err)
-        output = verify_popen.communicate()[0]
+        output = verify_popen.communicate()[0].decode('utf-8')
         if verify_popen.returncode == 0:
             return (True, output)
         else:
@@ -308,9 +308,8 @@ Assume function is executed in self.path.'''
                     err = 'Analysing output failed: %s' % (sys.exc_info()[1],)
                     raise exceptions.RunError(err)
                 # Convert data string from extract command to dictionary format.
-                outputs.append(
-                        util.dict_table_string(extract_popen.communicate()[0])
-                              )
+                table_string = extract_popen.communicate()[0].decode('utf-8')
+                outputs.append(util.dict_table_string(table_string))
 
         return tuple(outputs)
 
