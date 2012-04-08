@@ -1,4 +1,17 @@
-'''Functions for compatibility with python <2.6.'''
+'''Functions for compatibility with different versions of python.
+
+testcode2 is developed using python 3.2; these statements exist to enable
+testcode to function transparently (i.e. without using 2to3) on python 2.4
+onwards.
+
+Rather than using conditional statements in the main source code, instead place
+the required statements in this module and then use (e.g.)
+
+import testcode2.compatibility as compat
+
+var = compat.compat_set([1,2,3,1])
+
+in the main source code.'''
 
 ### python 2.4 ###
 
@@ -53,3 +66,10 @@ Replacement for math.isnan for python <2.6.
 This is not guaranteed to be portable, but does work under Linux.
 '''
         return type(val) is float and val != val
+
+### python 2 ###
+
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
