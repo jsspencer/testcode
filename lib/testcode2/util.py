@@ -17,6 +17,14 @@ def testcode_filename(stem, file_id, inp, args):
         filename = '%s.args=%s' % (filename, args_string)
     return filename
 
+def testcode_file_id(filename, stem):
+    '''Extract the file_id from a filename in the testcode format.'''
+    filename = filename.replace('%s.' % (stem), '')
+    filename = re.sub('\.inp=.*', '', filename)
+    filename = re.sub('\.args=.*', '', filename)
+    return filename
+
+
 def try_floatify(val):
     '''Convert val to a float if possible.'''
     try:
