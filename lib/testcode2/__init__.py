@@ -1,5 +1,6 @@
 '''testcode2, a framework for regression testing numerical programs.'''
 
+import glob
 import os
 import pipes
 import shutil
@@ -312,6 +313,30 @@ Assume function is executed in self.path.'''
                 outputs.append(util.dict_table_string(table_string))
 
         return tuple(outputs)
+
+    def create_new_benchmarks(self, benchmark, copy_files_since=None,
+            copy_files_path='testcode_data'):
+        '''Copy the test files to benchmark files.'''
+
+        oldcwd = os.getcwd()
+        os.chdir(self.path)
+
+        for (inp, arg) in self.inputs_args:
+            test_file = util.testcode_filename(FILESTEM['test'],
+                    self.test_program.test_id, inp, arg)
+            bench_file = util.testcode_filename(FILESTEM['benchmark'],
+                    benchmark, inp, arg)
+            shutil.copy(test_file, bench_file)
+
+        if copy_files_since:
+            if not os.path.isdir(copy_files_path):
+                os.mkdir(copy_files_path)
+            if os.path.isdir(copy_files_path):
+                for data_file in glob.glob('*'):
+                    if os.stat(data_file)[-2] >= copy_files_since:
+                        shutil.copy(data_file, copy_files_path)
+
+        os.chdir(oldcwd)
 
     def update_status(self, passed):
         '''Update self.status with success of a test.'''
