@@ -3,6 +3,7 @@
 import os.path
 import re
 import sys
+import textwrap
 
 import testcode2.compatibility as compat
 import testcode2.exceptions as exceptions
@@ -123,40 +124,53 @@ and
 def pretty_print_table(labels, dicts):
     '''Print data in dictionaries of identical size in a tabular format.'''
     # Loop through all elements in order to calculate the field width.
-    label_width = max(len(str(label)) for label in labels)
-    field_width = {}
-    fmt = dict(label='%%-%is' % (label_width))
-    header = [fmt['label'] % ('')]
+    # Create header line as we go.
+    fmt = dict(_tc_label='%%-%is' % (max(len(str(label)) for label in labels)))
+    header = []
     for key in sorted(dicts[0].keys()):
-        field_width[key] = len(str(key))
+        fmt[key] = len(str(key))
         nitems = 1
         if type(dicts[0][key]) is tuple or type(dicts[0][key]) is list:
             nitems = len(dicts[0][key])
             for dval in dicts:
                 for item in dval[key]:
-                    field_width[key] = max(field_width[key], len(str(item)))
+                    fmt[key] = max(fmt[key], len(str(item)))
         else:
-            field_width[key] = max(len(str(dval[key])) for dval in dicts)
-            field_width[key] = max(field_width[key], len(str(key)))
-        fmt[key] = '%%-%is' % (field_width[key])
+            fmt[key] = max(len(str(dval[key])) for dval in dicts)
+            fmt[key] = max(fmt[key], len(str(key)))
+        # Finished processing all data items with this key.
+        # Covert from field width into a format statement.
+        fmt[key] = '%%-%is' % (fmt[key])
         for item in range(nitems):
             header.append(fmt[key] % (key))
-    # printing without a new line is different in python 2 and python 3, so for
+    # Wrap header line and insert key/label at the start of each line.
+    key = fmt['_tc_label'] % ('')
+    header = textwrap.wrap(' '.join(header))
+    header = ['%s %s' % (key, line_part) for line_part in header]
+    # Printing without a new line is different in python 2 and python 3, so for
     # ease we construct the formatting for the line and then print it.
     lines = [ header ]
     for (ind, label) in enumerate(labels):
-        line = [fmt['label'] % (label)]
-        dval = dicts[ind]
-        for key in sorted(dval.keys()):
-            if type(dval[key]) is tuple or type(dval[key]) is list:
-                for item in range(len(dval[key])):
-                    line.append(fmt[key] % (dval[key][item]))
+        line = [fmt['_tc_label'] % (label)]
+        line = []
+        for key in sorted(dicts[ind].keys()):
+            if type(dicts[ind][key]) is tuple or type(dicts[ind][key]) is list:
+                for item in range(len(dicts[ind][key])):
+                    line.append(fmt[key] % (dicts[ind][key][item]))
             else:
-                line.append(fmt[key] % (dval[key]))
+                line.append(fmt[key] % (dicts[ind][key]))
+        # Wrap line and insert key/label at the start of each line.
+        key = fmt['_tc_label'] % (label)
+        line = textwrap.wrap(' '.join(line))
+        line = ['%s %s' % (key, line_part) for line_part in line]
         lines.extend([line])
-    # Now actually form table.
-    lines = ['  '.join(line) for line in lines]
-    table = '\n'.join(lines)
+    # Now actually form table.  Due to line wrapping we might actually form
+    # several subtables.  As each line has the same number of items (or
+    # should!), this is quite simple.
+    table = []
+    for ind in range(len(lines[0])):
+        table.append('\n'.join([line[ind] for line in lines]))
+    table = '\n'.join(table)
     return table
 
 def print_success(passed, msg, verbose):
