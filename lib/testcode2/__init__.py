@@ -23,17 +23,22 @@ FILESTEM = dict(
 
 class TestProgram:
     '''Store and access information about the program being tested.'''
-    def __init__(self, exe, test_id, benchmark, **kwargs):
+    def __init__(self, name, exe, test_id, benchmark, **kwargs):
 
-        # Set null defaults for keyword arguments.
+        # Set sane defaults (mostly null) for keyword arguments.
+
+        self.name = name
 
         # Running
         self.exe = exe
         self.test_id = test_id
         self.run_cmd_template = ('tc.program tc.args tc.input > '
                                                     'tc.output 2> tc.error')
-        self.launch_parallel = None
+        self.launch_parallel = 'mpirun'
         self.submit_template = None
+
+        # dummy job with default settings (e.g tolerance)
+        self.default_test_settings = None
 
         # Analysis
         self.benchmark = benchmark
@@ -47,6 +52,7 @@ class TestProgram:
         # Info
         self.vcs = None
 
+        # Set values passed in as keyword options.
         for (attr, val) in kwargs.items():
             setattr(self, attr, val)
 
@@ -101,10 +107,10 @@ class TestProgram:
 
 class Test:
     '''Store and execute a test.'''
-    def __init__(self, path):
+    def __init__(self, test_program, path, **kwargs):
 
         # program
-        self.test_program = None
+        self.test_program = test_program
 
         # running
         self.path = path
@@ -116,6 +122,10 @@ class Test:
         self.default_tolerance = None
         self.tolerances = {}
         self.status = dict(passed=0, ran=0)
+
+        # Set values passed in as keyword options.
+        for (attr, val) in kwargs.items():
+            setattr(self, attr, val)
 
         # 'Decorate' functions which require a directory lock in order for file
         # access to be thread-safe.
