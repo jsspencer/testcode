@@ -175,7 +175,7 @@ def pretty_print_table(labels, dicts):
         table = 'No data for %s.' % ('; '.join(labels))
     return table
 
-def print_success(passed, msg, verbose):
+def print_success(passed, msg, verbose=True, vspace=True):
     '''Print output from comparing test job to benchmark.'''
     if verbose:
         if passed:
@@ -184,6 +184,8 @@ def print_success(passed, msg, verbose):
             print('**FAILED**.')
         if msg:
             print(msg)
+        if vspace:
+            print('')
     else:
         if passed:
             sys.stdout.write('.')
