@@ -50,6 +50,7 @@ class TestProgram:
         self.verify = False
 
         # Info
+        # TODO: create.
         self.vcs = None
 
         # Set values passed in as keyword options.
@@ -172,23 +173,17 @@ class Test:
                 if cluster_queue:
                     # Did all of them at once.
                     for (test_input, test_arg) in self.inputs_args:
-                        (passed, msg) = self.verify_job(test_input, test_arg,
-                                verbose)
-                        self.update_status(passed)
-                        util.print_success(passed, msg, verbose)
+                        self.verify_job(test_input, test_arg, verbose)
                 else:
                     # Did one job at a time.
                     (test_input, test_arg) = self.inputs_args[ind]
                     if self.output:
                         shutil.move(self.output, test_files[ind])
-                    (passed, msg) = self.verify_job(test_input, test_arg,
-                            verbose)
-                    self.update_status(passed)
-                    util.print_success(passed, msg, verbose)
+                    self.verify_job(test_input, test_arg, verbose)
         except exceptions.RunError:
             err = sys.exc_info()[1]
             err = 'Test(s) in %s failed.\n%s' % (self.path, err)
-            self.update_status(False)
+            self._update_status(False)
             util.print_success(False, err, verbose)
 
     def _start_job(self, cmd, cluster_queue=None, verbose=True):
@@ -237,7 +232,7 @@ threads.
 Decorated to verify_job, which acquires directory lock and enters self.path
 first, during initialisation.'''
         if self.test_program.verify:
-            return self.verify_job_external(input_file, args, verbose)
+            (passed, msg) = self.verify_job_external(input_file, args, verbose)
         else:
             (bench_out, test_out) = self.extract_data(input_file, args, verbose)
             (status, msg) = validation.compare_data(bench_out, test_out,
@@ -258,7 +253,11 @@ first, during initialisation.'''
                 msg = '\n'.join((msg, data_table))
             else:
                 msg = data_table
-            return (passed, msg)
+
+        self._update_status(passed)
+        util.print_success(passed, msg, verbose)
+
+        return (passed, msg)
 
     def verify_job_external(self, input_file, args, verbose=True):
         '''Run user-supplied verifier script.
@@ -352,7 +351,7 @@ Assume function is executed in self.path.'''
 
         os.chdir(oldcwd)
 
-    def update_status(self, passed):
+    def _update_status(self, passed):
         '''Update self.status with success of a test.'''
         self.status['ran'] += 1
         if passed:
