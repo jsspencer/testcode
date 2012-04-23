@@ -73,3 +73,8 @@ try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
+
+try:
+    compat_input = raw_input
+except NameError:
+    compat_input = input
