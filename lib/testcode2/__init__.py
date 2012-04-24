@@ -50,7 +50,6 @@ class TestProgram:
         self.verify = False
 
         # Info
-        # TODO: create.
         self.vcs = None
 
         # Set values passed in as keyword options.

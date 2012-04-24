@@ -8,6 +8,7 @@ import testcode2
 import testcode2.compatibility as compat
 import testcode2.exceptions as exceptions
 import testcode2.validation as validation
+import testcode2.vcs as vcs
 
 def parse_tolerance_tuple(val):
     '''Parse (abs_tol,rel_tol,name).'''
@@ -81,12 +82,15 @@ config_file: location of the userconfig file, either relative or absolute.'''
             exe = executables['_tc_all']
         else:
             exe = 'exe'
-        # Create a default test settings.
-        # First, tolerances...
         if userconfig.has_option(section, exe):
             # exe is set to be a key rather than the path to an executable.
             # Expand.
             exe = userconfig.get(section, exe)
+        if 'vcs' in tp_dict:
+            tp_dict['vcs'] = vcs.VCSRepository(tp_dict['vcs'],
+                    os.path.dirname(exe))
+        # Create a default test settings.
+        # First, tolerances...
         if userconfig.has_option(section, 'tolerance'):
             for item in (
                     compat.literal_eval(userconfig.get(section, 'tolerance'))
