@@ -172,9 +172,7 @@ def pretty_print_table(labels, dicts):
     for ind in range(len(lines[0])):
         table.append('\n'.join([line[ind] for line in lines]))
     table = '\n'.join(table)
-    if not table:
-        table = 'No data for %s.' % ('; '.join(labels))
-    return table
+    return table or 'No data for %s.' % ('; '.join(labels))
 
 def print_success(passed, msg, verbose=True, vspace=True):
     '''Print output from comparing test job to benchmark.'''
