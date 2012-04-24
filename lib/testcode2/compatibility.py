@@ -51,7 +51,7 @@ try:
 except ImportError:
     import testcode2._functools_dummy as functools
 
-### python 2.5, python 2.5 ###
+### python 2.4, python 2.5 ###
 
 # math.isnan was introduced in python 2.6, so need a workaround for 2.4 and 2.5.
 try:
@@ -66,6 +66,47 @@ Replacement for math.isnan for python <2.6.
 This is not guaranteed to be portable, but does work under Linux.
 '''
         return type(val) is float and val != val
+
+try:
+    # python >=2.6
+    from ast import literal_eval
+except ImportError:
+    # python 2.4, 2.5
+    from compiler import parse
+    from compiler import ast
+    def literal_eval(node_or_string):
+        """Safely evaluate a node/string containing a Python expression.
+
+Thestring or node provided may only consist of the following Python literal
+structures: strings, numbers, tuples, lists, dicts,  booleans, and None.
+
+Essentially a backport of the literal_eval function in python 2.6 onwards.
+From: http://mail.python.org/pipermail/python-list/2009-September/1219992.html
+        """
+        _safe_names = {'None': None, 'True': True, 'False': False}
+        if isinstance(node_or_string, basestring):
+            node_or_string = parse(node_or_string, mode='eval')
+        if isinstance(node_or_string, ast.Expression):
+            node_or_string = node_or_string.node
+        def _convert(node):
+            '''Convert node/string to expression.'''
+            if isinstance(node, ast.Const) and isinstance(node.value,
+                    (basestring, int, float, long, complex)):
+                return node.value
+            elif isinstance(node, ast.Tuple):
+                return tuple(_convert(element) for element in node.nodes)
+            elif isinstance(node, ast.List):
+                return list(_convert(element) for element in node.nodes)
+            elif isinstance(node, ast.Dict):
+                return dict((_convert(k), _convert(v)) for k, v
+                            in node.items)
+            elif isinstance(node, ast.Name):
+                if node.name in _safe_names:
+                    return _safe_names[node.name]
+            elif isinstance(node, ast.UnarySub):
+                return -_convert(node.expr)
+            raise ValueError('malformed string')
+        return _convert(node_or_string)
 
 ### python 2 ###
 
