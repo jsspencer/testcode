@@ -9,19 +9,21 @@ import testcode2.compatibility as compat
 import testcode2.exceptions as exceptions
 import testcode2.validation as validation
 
-def parse_tolerance_string(val):
-    '''Parse name;abs_tol;rel_tol.'''
-    val = val.split(';')
+def parse_tolerance_tuple(val):
+    '''Parse (abs_tol,rel_tol,name).'''
     if len(val) == 3:
-        name = val[0]
+        name = val[2]
     else:
         name = None
-    for ind in (-2, -1):
-        if val[ind]:
-            val[ind] = float(val[ind])
-        else:
-            val[ind] = None
-    return (name, validation.Tolerance(val[-2], val[-1]))
+    if len(val) >= 2:
+        rel_tol = val[1]
+    else:
+        rel_tol = None
+    if len(val) >= 1:
+        abs_tol = val[0]
+    else:
+        abs_tol = None
+    return (name, validation.Tolerance(abs_tol, rel_tol))
 
 def parse_userconfig(config_file, executables=None, test_id=None):
     '''Parse the user options and job types from the userconfig file.
@@ -41,15 +43,15 @@ config_file: location of the userconfig file, either relative or absolute.'''
     userconfig.read(config_file)
 
     # Sensible defaults for the user options.
-    user_options = dict(benchfile=None, date_fmt='%d%m%Y', tolerance='1.e-10;',
-            output_files=None, diff='diff')
+    user_options = dict(benchfile=None, date_fmt='%d%m%Y',
+            tolerance='(1.e-10,None)', output_files=None, diff='diff')
 
     if userconfig.has_section('user'):
         user_options.update(dict(userconfig.items('user')))
         userconfig.remove_section('user')
         user_options['tolerance'] = dict(
-                (parse_tolerance_string(item)
-                    for item in user_options['tolerance'].split())
+                (parse_tolerance_tuple(item)
+                     for item in compat.literal_eval(user_options['tolerance']))
                                         )
     else:
         raise exceptions.TestCodeError(
@@ -86,8 +88,10 @@ config_file: location of the userconfig file, either relative or absolute.'''
             # Expand.
             exe = userconfig.get(section, exe)
         if userconfig.has_option(section, 'tolerance'):
-            for item in userconfig.get(section, 'tolerance').split():
-                (name, tol) = parse_tolerance_string(item)
+            for item in (
+                    compat.literal_eval(userconfig.get(section, 'tolerance'))
+                        ):
+                (name, tol) = parse_tolerance_tuple(item)
                 tolerances[name] = tol
         test_dict = dict(
                          default_tolerance=tolerances[None],
@@ -165,8 +169,10 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                         )
         # tolerances
         if jobconfig.has_option(section, 'tolerance'):
-            for item in jobconfig.get(section, 'tolerance').split():
-                (name, tol) = parse_tolerance_string(item)
+            for item in (
+                    compat.literal_eval(jobconfig.get(section,'tolerance'))
+                        ):
+                (name, tol) = parse_tolerance_tuple(item)
                 test_dict['tolerances'][name] = tol
             jobconfig.remove_option(section, 'tolerance')
         if None in test_dict['tolerances']:
