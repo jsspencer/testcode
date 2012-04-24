@@ -100,9 +100,9 @@ config_file: location of the userconfig file, either relative or absolute.'''
         if 'nprocs' in test_dict:
             test_dict['nprocs'] = int(test_dict['nprocs'])
         if 'inputs_args' in test_dict:
-            # format: input_file_1;args_1 input_file_2;args_2
-            test_dict['inputs_args'] = tuple(inp_arg.split(';') for inp_arg in
-                                               test_dict['inputs_args'].split())
+            # format: (input, arg), (input, arg)'
+            test_dict['inputs_args'] = compat.literal_eval(
+                                               test_dict['inputs_args'])
         # Create default test instance.
         default_test_settings = testcode2.Test(None, None, **test_dict)
         # Create a default test.
@@ -173,9 +173,9 @@ config_file: location of the jobconfig file, either relative or absolute.'''
             test_dict['default_tolerance'] = test_dict['tolerances'][None]
         # inputs and arguments
         if jobconfig.has_option(section, 'input'):
-            # format: input_file_1;args_1 input_file_2;args_2
-            test_dict['inputs_args'] = tuple(inp_arg.split(';') for inp_arg in
-                                                    test_dict['input'].split())
+            # format: (input, arg), (input, arg)'
+            test_dict['inputs_args'] = compat.literal_eval(
+                                               test_dict['inputs_args'])
             jobconfig.remove_option(section, 'input')
         # Other options.
         for option in jobconfig.options(section):
