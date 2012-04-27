@@ -80,7 +80,7 @@ class TestProgram:
             cmd = cmd.replace('tc.args', '')
         cmd = cmd.replace('tc.output', output_file)
         cmd = cmd.replace('tc.error', error_file)
-        if nprocs != 0 and self.launch_parallel:
+        if nprocs > 0 and self.launch_parallel:
             cmd = '%s -np %s %s' % (self.launch_parallel, nprocs, cmd)
         return cmd
 
