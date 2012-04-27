@@ -187,11 +187,12 @@ config_file: location of the jobconfig file, either relative or absolute.'''
         if None in test_dict['tolerances']:
             test_dict['default_tolerance'] = test_dict['tolerances'][None]
         # inputs and arguments
-        if jobconfig.has_option(section, 'input'):
+        if jobconfig.has_option(section, 'inputs_args'):
             # format: (input, arg), (input, arg)'
             test_dict['inputs_args'] = compat.literal_eval(
-                                               '%s,' % test_dict['inputs_args'])
-            jobconfig.remove_option(section, 'input')
+                                   '%s,' % jobconfig.get(section, 'inputs_args')
+                                                          )
+            jobconfig.remove_option(section, 'inputs_args')
         # Other options.
         for option in jobconfig.options(section):
             test_dict[option] = jobconfig.get(section, option)
