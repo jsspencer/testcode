@@ -117,6 +117,7 @@ class Test:
         self.inputs_args = None
         self.output = None
         self.nprocs = 0
+        self.override_nprocs = False
 
         # Analysis
         self.default_tolerance = None
