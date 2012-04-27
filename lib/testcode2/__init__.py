@@ -345,8 +345,15 @@ Assume function is executed in self.path.'''
                 os.mkdir(copy_files_path)
             if os.path.isdir(copy_files_path):
                 for data_file in glob.glob('*'):
-                    if os.stat(data_file)[-2] >= copy_files_since:
-                        shutil.copy(data_file, copy_files_path)
+                    if (os.path.isfile(data_file) and
+                            os.stat(data_file)[-2] >= copy_files_since):
+                        bench_data_file = os.path.join(copy_files_path,
+                                data_file)
+                        # shutil.copy can't overwrite files so remove old ones
+                        # with the same name.
+                        if os.path.exists(bench_data_file):
+                            os.unlink(bench_data_file)
+                        shutil.copy(data_file, bench_data_file)
 
         os.chdir(oldcwd)
 
