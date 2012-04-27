@@ -50,9 +50,12 @@ config_file: location of the userconfig file, either relative or absolute.'''
     if userconfig.has_section('user'):
         user_options.update(dict(userconfig.items('user')))
         userconfig.remove_section('user')
+        # Append a comma to the option to ensure literal_eval returns a tuple
+        # of tuples, even if the option only contains a single tuple.
         user_options['tolerance'] = dict(
                 (parse_tolerance_tuple(item)
-                     for item in compat.literal_eval(user_options['tolerance']))
+                     for item in
+                        compat.literal_eval('%s,' % user_options['tolerance']))
                                         )
     else:
         raise exceptions.TestCodeError(
@@ -93,7 +96,8 @@ config_file: location of the userconfig file, either relative or absolute.'''
         # First, tolerances...
         if userconfig.has_option(section, 'tolerance'):
             for item in (
-                    compat.literal_eval(userconfig.get(section, 'tolerance'))
+                    compat.literal_eval('%s,' %
+                        userconfig.get(section, 'tolerance'))
                         ):
                 (name, tol) = parse_tolerance_tuple(item)
                 tolerances[name] = tol
@@ -110,7 +114,7 @@ config_file: location of the userconfig file, either relative or absolute.'''
         if 'inputs_args' in test_dict:
             # format: (input, arg), (input, arg)'
             test_dict['inputs_args'] = compat.literal_eval(
-                                               test_dict['inputs_args'])
+                                               '%s,' % test_dict['inputs_args'])
         # Create default test instance.
         default_test_settings = testcode2.Test(None, None, **test_dict)
         # Create a default test.
@@ -174,7 +178,8 @@ config_file: location of the jobconfig file, either relative or absolute.'''
         # tolerances
         if jobconfig.has_option(section, 'tolerance'):
             for item in (
-                    compat.literal_eval(jobconfig.get(section,'tolerance'))
+                    compat.literal_eval('%s,' %
+                        jobconfig.get(section,'tolerance'))
                         ):
                 (name, tol) = parse_tolerance_tuple(item)
                 test_dict['tolerances'][name] = tol
@@ -185,7 +190,7 @@ config_file: location of the jobconfig file, either relative or absolute.'''
         if jobconfig.has_option(section, 'input'):
             # format: (input, arg), (input, arg)'
             test_dict['inputs_args'] = compat.literal_eval(
-                                               test_dict['inputs_args'])
+                                               '%s,' % test_dict['inputs_args'])
             jobconfig.remove_option(section, 'input')
         # Other options.
         for option in jobconfig.options(section):
