@@ -3,10 +3,12 @@
 import copy
 import glob
 import os
+import time
 
 import testcode2
 import testcode2.compatibility as compat
 import testcode2.exceptions as exceptions
+import testcode2.util as util
 import testcode2.validation as validation
 import testcode2.vcs as vcs
 
@@ -221,3 +223,38 @@ config_file: location of the jobconfig file, either relative or absolute.'''
         tests.append(testcode2.Test(test_program, path, **test_dict))
 
     return (tests, test_categories)
+
+def get_unique_test_id(tests, reuse_id=False, date_fmt='%d%m%Y'):
+    '''Find a unique test id based upon the date and previously run tests.'''
+    todays_id = time.strftime(date_fmt)
+    newest_file = None
+    test_id = '0'*len(todays_id)
+    for test in tests:
+        test_globs = glob.glob('%s*' %
+                os.path.join(test.path, testcode2.FILESTEM['test'])
+                              )
+        for test_file in test_globs:
+            if (not newest_file or
+                    os.stat(test_file)[-2] > os.stat(newest_file)[-2]):
+                newest_file = test_file
+                # keep track of the latest file with today's test_id (in case
+                # the most recent test was run with a user-specified test_id).
+                newest_test_id = util.testcode_file_id(
+                                 newest_file, testcode2.FILESTEM['test']
+                                                 )
+                if newest_test_id[:len(todays_id)] == todays_id:
+                    test_id = newest_test_id
+    if reuse_id:
+        # Want test_id to be the most recent set of tests.
+        test_id = util.testcode_file_id(newest_file, testcode2.FILESTEM['test'])
+    elif test_id[:len(todays_id)] == todays_id:
+        # Have run at more than one test today already.  Create unique id.
+        if len(test_id) == len(todays_id):
+            test_id = 1
+        else:
+            test_id = int(test_id[len(todays_id)+1:]) + 1
+        test_id = '%s-%s' % (todays_id, test_id)
+    else:
+        # First test of the day!
+        test_id = todays_id
+    return test_id
