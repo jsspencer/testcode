@@ -258,3 +258,40 @@ def get_unique_test_id(tests, reuse_id=False, date_fmt='%d%m%Y'):
         # First test of the day!
         test_id = todays_id
     return test_id
+
+def select_tests(all_tests, test_categories, selected_categories, prefix=''):
+    '''Return the set of tests contained by the selected test categories.'''
+    test_categories['_all_'] = [test.path for test in all_tests]
+    if ('_default_' in selected_categories
+            and '_default_' not in test_categories):
+        selected_categories = ['_all_']
+    # Recursively expand job categories.
+    while compat.compat_any(
+                    cat in test_categories for cat in selected_categories
+                           ):
+        tmp = []
+        for cat in selected_categories:
+            if cat in test_categories:
+                tmp.extend(test_categories[cat])
+            else:
+                # cat has been fully expanded and now refers to a test
+                # contained within the directory named cat.
+                tmp.append(cat)
+        selected_categories = tmp
+    # prepend supplied prefix path to test name, where prefix is
+    # prepended to all the test.path attributes.
+    selected_categories = [os.path.normpath(os.path.join(prefix, cat))
+            for cat in selected_categories]
+    # Only want to run each test once.
+    selected_categories = compat.compat_set(selected_categories)
+    tests = [test for test in all_tests
+            if os.path.normpath(test.path) in selected_categories]
+    # Check...
+    test_paths = [os.path.normpath(test.path) for test in tests]
+    for cat in selected_categories:
+        if cat not in test_paths:
+            # Remove prefix from path to match the original path.
+            # normpath does not end in a /, so remove that as well.
+            cat = cat[len(os.path.normpath(prefix))+1:]
+            print('WARNING: %s test/category not found.\n' % cat)
+    return tests
