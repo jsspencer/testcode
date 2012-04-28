@@ -122,11 +122,13 @@ class Test:
         # Analysis
         self.default_tolerance = None
         self.tolerances = {}
-        self.status = dict(passed=0, ran=0)
 
         # Set values passed in as keyword options.
         for (attr, val) in kwargs.items():
             setattr(self, attr, val)
+
+        self.status = dict( (inp_arg, [False, False])
+                                            for inp_arg in self.inputs_args )
 
         # 'Decorate' functions which require a directory lock in order for file
         # access to be thread-safe.
@@ -183,7 +185,7 @@ class Test:
         except exceptions.RunError:
             err = sys.exc_info()[1]
             err = 'Test(s) in %s failed.\n%s' % (self.path, err)
-            self._update_status(False)
+            self._update_status(False, (test_input, test_arg))
             util.print_success(False, err, verbose)
 
     def _start_job(self, cmd, cluster_queue=None, verbose=True):
@@ -254,7 +256,7 @@ first, during initialisation.'''
             else:
                 msg = data_table
 
-        self._update_status(passed)
+        self._update_status(passed, (input_file, args))
         util.print_success(passed, msg, verbose)
 
         return (passed, msg)
@@ -358,8 +360,14 @@ Assume function is executed in self.path.'''
 
         os.chdir(oldcwd)
 
-    def _update_status(self, passed):
+    def _update_status(self, passed, inp_arg):
         '''Update self.status with success of a test.'''
-        self.status['ran'] += 1
+        self.status[inp_arg][0] = True
         if passed:
-            self.status['passed'] += 1
+            self.status[inp_arg][1] = True
+
+    def get_status(self):
+        '''Get number of passed and number of ran tasks.'''
+        nran = sum(task[0] for task in self.status.values())
+        npassed = sum(task[1] for task in self.status.values())
+        return (npassed, nran)
