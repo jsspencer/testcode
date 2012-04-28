@@ -208,7 +208,7 @@ first, during initialisation.'''
         else:
             # Run locally via subprocess.
             if verbose:
-                print('Running test using %s in %s' % (cmd, self.path))
+                print('Running test using %s in %s\n' % (cmd, self.path))
             try:
                 job = subprocess.Popen(cmd, shell=True)
             except OSError:
