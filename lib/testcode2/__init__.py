@@ -295,10 +295,10 @@ Assume function is executed in self.path.'''
         if tp_ptr.data_tag:
             # Using internal data extraction function.
             data_files = [
-                    util.testcode_filename(FILESTEM['test'],
-                            tp_ptr.test_id, input_file, args),
                     util.testcode_filename(FILESTEM['benchmark'],
                             tp_ptr.benchmark, input_file, args),
+                    util.testcode_filename(FILESTEM['test'],
+                            tp_ptr.test_id, input_file, args),
                          ]
             outputs = [util.extract_tagged_data(tp_ptr.data_tag, dfile)
                     for dfile in data_files]
