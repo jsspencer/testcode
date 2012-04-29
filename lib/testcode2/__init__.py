@@ -127,6 +127,9 @@ class Test:
         for (attr, val) in kwargs.items():
             setattr(self, attr, val)
 
+        if not self.inputs_args:
+            self.inputs_args = [('', '')]
+
         self.status = dict( (inp_arg, [False, False])
                                             for inp_arg in self.inputs_args )
 
