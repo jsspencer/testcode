@@ -25,12 +25,14 @@ Given floats are regarded as equal if they are within these tolerances.'''
                     err = abs(diff)
                     passed = err < self.absolute
                     if not passed:
-                        msg = 'absolute error %.2e.' % (err)
+                        msg = ('absolute error %.2e greater than %.2e.' %
+                                (err, self.absolute))
                 if passed and self.relative:
                     err = abs(diff/benchmark_val)
                     passed = err < self.relative
                     if not passed:
-                        msg = 'relative error %.2e.' % (err)
+                        msg = ('relative error %.2e greater than %.2e.' %
+                                (err, self.relative))
         except TypeError:
             if test_val != benchmark_val:
                 # require test and benchmark values to be equal (within python's
