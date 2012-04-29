@@ -303,6 +303,19 @@ def make_benchmarks(test_programs, tests, userconfig, copy_files_since):
 
 #--- info output ---
 
+def start_status(tests, running, verbose):
+
+    if verbose:
+        exes = [test.test_program.exe for test in tests]
+        exes = testcode2.compatibility.compat_set(exes)
+        if running:
+            for exe in exes:
+                print('Using executable: %s.' % (exe))
+        # All tests use the same test_id and benchmark.
+        print('Test id: %s.' % (tests[0].test_program.test_id))
+        print('Benchmark: %s.' % (tests[0].test_program.benchmark))
+        print('')
+
 def end_status(tests, verbose):
 
     statuses = [test.get_status() for test in tests]
@@ -338,6 +351,7 @@ def main(args):
             options.benchmark, options.user_option,
             options.job_option)
 
+    start_status(tests, 'run' in actions, verbose)
     if 'run' in actions:
         run_tests(tests, verbose, options.nthreads)
         end_status(tests, verbose)
