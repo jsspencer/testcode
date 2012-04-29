@@ -28,7 +28,8 @@ def parse_tolerance_tuple(val):
         abs_tol = None
     return (name, validation.Tolerance(abs_tol, rel_tol))
 
-def parse_userconfig(config_file, executables=None, test_id=None):
+def parse_userconfig(config_file, executables=None, test_id=None,
+        settings=None):
     '''Parse the user options and job types from the userconfig file.
 
 config_file: location of the userconfig file, either relative or absolute.'''
@@ -44,6 +45,12 @@ config_file: location of the userconfig file, either relative or absolute.'''
     userconfig = compat.configparser.RawConfigParser()
     userconfig.optionxform = str # Case sensitive file.
     userconfig.read(config_file)
+
+    # Alter config file with additional settings provided.
+    if settings:
+        for (section_key, section) in settings.items():
+            for (option_key, value) in section.items():
+                userconfig.set(section_key, option_key, value)
 
     # Sensible defaults for the user options.
     user_options = dict(benchfile=None, date_fmt='%d%m%Y',
@@ -117,10 +124,9 @@ config_file: location of the userconfig file, either relative or absolute.'''
             # format: (input, arg), (input, arg)'
             test_dict['inputs_args'] = compat.literal_eval(
                                                '%s,' % test_dict['inputs_args'])
-        # Create default test instance.
-        default_test_settings = testcode2.Test(None, None, **test_dict)
         # Create a default test.
-        tp_dict['default_test_settings'] = default_test_settings
+        tp_dict['default_test_settings'] = testcode2.Test(None, None,
+                **test_dict)
         program = testcode2.TestProgram(section, exe, test_id,
             user_options['benchmark'], **tp_dict)
         test_programs[section] = program
@@ -132,7 +138,7 @@ config_file: location of the userconfig file, either relative or absolute.'''
 
     return (user_options, test_programs)
 
-def parse_jobconfig(config_file, user_options, test_programs):
+def parse_jobconfig(config_file, user_options, test_programs, settings=None):
     '''Parse the test configurations from the jobconfig file.
 
 config_file: location of the jobconfig file, either relative or absolute.'''
@@ -149,6 +155,12 @@ config_file: location of the jobconfig file, either relative or absolute.'''
     jobconfig = compat.configparser.RawConfigParser()
     jobconfig.optionxform = str # Case sensitive file.
     jobconfig.read(config_file)
+
+    # Alter config file with additional settings provided.
+    if settings:
+        for (section_key, section) in settings.items():
+            for (option_key, value) in section.items():
+                jobconfig.set(section_key, option_key, value)
 
     # Parse job categories.
     # Just store as list of test names for now.
@@ -217,6 +229,8 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                 if inp:
                     for inp_file in glob.glob(inp):
                         inputs_args.append((inp_file, arg))
+                else:
+                    inputs_args.append((inp, arg))
             test_dict['inputs_args'] = tuple(inputs_args)
         os.chdir(old_dir)
         # Create test.
