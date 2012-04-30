@@ -3,7 +3,6 @@
 import os.path
 import re
 import sys
-import textwrap
 
 import testcode2.compatibility as compat
 import testcode2.exceptions as exceptions
@@ -122,6 +121,27 @@ and
         data_dict[key] = tuple(val)
     return data_dict
 
+def wrap_list_strings(word_list, width):
+    '''Create a list of strings of a given width from a list of words.
+
+This is, to some extent, a version of textwrap.wrap but without the 'feature'
+of removing additional whitespace.'''
+    wrapped_strings = []
+    clen = 0
+    cstring = []
+    for string in word_list:
+        if clen + len(string) + len(cstring) <= width:
+            cstring.append(string)
+            clen += len(string)
+        else:
+            wrapped_strings.append(' '.join(cstring))
+            cstring = []
+            clen = 0
+    if cstring:
+        wrapped_strings.append(' '.join(cstring))
+    return wrapped_strings
+
+
 def pretty_print_table(labels, dicts):
     '''Print data in dictionaries of identical size in a tabular format.'''
     # Loop through all elements in order to calculate the field width.
@@ -146,7 +166,7 @@ def pretty_print_table(labels, dicts):
             header.append(fmt[key] % (key))
     # Wrap header line and insert key/label at the start of each line.
     key = fmt['_tc_label'] % ('')
-    header = textwrap.wrap(' '.join(header))
+    header = wrap_list_strings(header, 70)
     header = ['%s %s' % (key, line_part) for line_part in header]
     # Printing without a new line is different in python 2 and python 3, so for
     # ease we construct the formatting for the line and then print it.
@@ -162,7 +182,7 @@ def pretty_print_table(labels, dicts):
                 line.append(fmt[key] % (dicts[ind][key]))
         # Wrap line and insert key/label at the start of each line.
         key = fmt['_tc_label'] % (label)
-        line = textwrap.wrap(' '.join(line))
+        line = wrap_list_strings(line, 70)
         line = ['%s %s' % (key, line_part) for line_part in line]
         lines.extend([line])
     # Now actually form table.  Due to line wrapping we might actually form
