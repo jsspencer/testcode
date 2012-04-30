@@ -36,6 +36,7 @@ class TestProgram:
                                                     'tc.output 2> tc.error')
         self.launch_parallel = 'mpirun'
         self.submit_template = None
+        self.submit_pattern = 'testcode.run_cmd'
 
         # dummy job with default settings (e.g tolerance)
         self.default_test_settings = None
