@@ -15,11 +15,18 @@ import testcode2.util as util
 import testcode2.validation as validation
 
 DIR_LOCK = dir_lock.DirLock()
-FILESTEM = dict(
-                 test = 'test.out',
-                 error = 'test.err',
-                 benchmark = 'benchmark.out',
-               )
+
+# Do not change!  Bad things will happen...
+_FILESTEM_TUPLE = (
+                    ('test', 'test,out'),
+                    ('error', 'test.err'),
+                    ('benchmark', 'benchmark.out'),
+                  )
+# We can change FILESTEM if needed.
+# However, this should only be done to compare two sets of test output or two
+# sets of benchmarks.
+# Bad things will happen if tests are run without the default FILESTEM!
+FILESTEM = dict( _FILESTEM_TUPLE )
 
 class TestProgram:
     '''Store and access information about the program being tested.'''

@@ -227,8 +227,15 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                 else:
                     arg = ''
                 if inp:
+                    # the test, error and benchmark filenames contain the input
+                    # filename, so we need to filter them out.
                     for inp_file in glob.glob(inp):
-                        inputs_args.append((inp_file, arg))
+                        testcode_files = [
+                            util.testcode_filename(stem[1], '*', inp_file, arg)
+                            for stem in testcode2._FILESTEM_TUPLE
+                                         ]
+                        if inp_file not in testcode_files:
+                            inputs_args.append((inp_file, arg))
                 else:
                     inputs_args.append((inp, arg))
             test_dict['inputs_args'] = tuple(inputs_args)
