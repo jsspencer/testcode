@@ -177,9 +177,14 @@ class Test:
             if cluster_queue:
                 if self.output:
                     for (ind, test) in enumerate(test_cmds):
+                        # Don't quote self.output if it contains any wildcards
+                        # (assume the user set it up correctly!)
+                        out = self.output
+                        if not compat.compat_any(wild in self.output for wild in
+                                ['*', '?', '[', '{']):
+                            out = pipes.quote(self.output)
                         test_cmds[ind] = '%s; mv %s %s' % (test_cmds[ind],
-                                pipes.quote(self.output),
-                                pipes.quote(test_files[ind]))
+                                out, pipes.quote(test_files[ind]))
                 test_cmds = ['\n'.join(test_cmds)]
             for (ind, test) in enumerate(test_cmds):
                 job = self.start_job(test, cluster_queue, verbose)
