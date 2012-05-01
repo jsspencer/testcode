@@ -230,10 +230,19 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                     # the test, error and benchmark filenames contain the input
                     # filename, so we need to filter them out.
                     for inp_file in glob.glob(inp):
-                        testcode_files = [
-                            util.testcode_filename(stem[1], '*', inp_file, arg)
-                            for stem in testcode2._FILESTEM_TUPLE
-                                         ]
+                        # We use a glob for the input argument to avoid the
+                        # case where the argument is empty and hence a pattern
+                        # such as *.inp also matches files like
+                        # test.out.test_id.inp=x.inp and hence considering
+                        # previous output files to actually be an input file in
+                        # their own right.
+                        test_files = [
+                             util.testcode_filename(stem[1], '*', '*', arg)
+                             for stem in testcode2._FILESTEM_TUPLE
+                                     ]
+                        testcode_files = []
+                        for tc_file in test_files:
+                            testcode_files.extend(glob.glob(tc_file))
                         if inp_file not in testcode_files:
                             inputs_args.append((inp_file, arg))
                 else:
