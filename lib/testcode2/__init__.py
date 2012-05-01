@@ -212,7 +212,8 @@ first, during initialisation.'''
 
         if cluster_queue:
             tp_ptr = self.test_program
-            submit_file = '%s.%s' % (tp_ptr.submit_template, tp_ptr.test_id)
+            submit_file = '%s.%s' % (os.path.basename(tp_ptr.submit_template),
+                                                                tp_ptr.test_id)
             job = queues.ClusterQueueJob(submit_file, system=cluster_queue)
             job.create_submit_file(tp_ptr.submit_pattern, cmd,
                                    tp_ptr.submit_template)
