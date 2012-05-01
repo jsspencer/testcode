@@ -148,6 +148,8 @@ class Test:
         # syntactic sugar.  Fortunately we can still modify them at
         # initialisation time.  Thank you python for closures!
         self.start_job = DIR_LOCK.in_dir(self.path)(self._start_job)
+        self.move_output_to_test_output = DIR_LOCK.in_dir(self.path)(
+                                               self._move_output_to_test_output)
         self.verify_job = DIR_LOCK.in_dir(self.path)(self._verify_job)
 
     def run_test(self, verbose=True, cluster_queue=None):
@@ -191,7 +193,7 @@ class Test:
                     # Did one job at a time.
                     (test_input, test_arg) = self.inputs_args[ind]
                     if self.output:
-                        shutil.move(self.output, test_files[ind])
+                        self.move_output_to_test_output(test_files[ind])
                     self.verify_job(test_input, test_arg, verbose)
         except exceptions.RunError:
             err = sys.exc_info()[1]
@@ -233,6 +235,30 @@ first, during initialisation.'''
         # Return either Popen object or ClusterQueueJob object.  Both have
         # a wait method which returns only once job has finished.
         return job
+
+    def _move_output_to_test_output(self, test_files_out):
+        '''Move output to the testcode output file.  Requires directory lock.
+
+This is used when a program writes to standard output rather than to STDOUT.
+
+IMPORTANT: use self.move_output_to_test_output rather than
+self._move_output_to_test_output if using multiple threads.
+
+Decorated to move_output_to_test_output, which acquires the directory lock and
+enters self.path.
+'''
+        # self.output might be a glob which works with e.g.
+        #   mv self.output test_files[ind]
+        # if self.output matches only one file.  Reproduce that
+        # here so that running tests through the queueing system
+        # and running tests locally have the same behaviour.
+        out_files = glob.glob(self.output)
+        if len(out_files) == 1:
+            shutil.move(out_files[0], test_files_out)
+        else:
+            err = ('Output pattern (%s) matches %s files (%s).'
+                     % (self.output, len(out_files), out_files))
+            raise exceptions.RunError(err)
 
     def _verify_job(self, input_file, args, verbose=True):
         '''Check job against benchmark.
