@@ -359,7 +359,7 @@ def main(args):
 
     start_status(tests, 'run' in actions, verbose)
     if 'run' in actions:
-        run_tests(tests, verbose, options.cluster_queue, options.nthreads)
+        run_tests(tests, verbose, options.queue_system, options.nthreads)
         end_status(tests, verbose)
     if 'compare' in actions:
         compare_tests(tests, verbose)
