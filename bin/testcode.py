@@ -100,8 +100,9 @@ def parse_cmdline_args(args):
             'Default: run tests as serial jobs.')
     parser.add_option('-q', '--quiet', action='store_false', dest='verbose',
             default=True, help='Print only minimal output.  Default: False.')
-    parser.add_option('-s', '--submit', action='store_true', default=False,
-            help='Submit tests to a queueing system.  Default: %default.')
+    parser.add_option('-s', '--submit', dest='queue_system', default=None,
+            help='Submit tests to a queueing system of the specified type.  '
+            'Only PBS system is currently implemented.  Default: %default.')
     parser.add_option('-t', '--test-id', dest='test_id', help='Set the file ID '
             'of the test outputs.  Default: unique filename based upon date '
             'if running tests and most recent test_id if comparing tests.')
@@ -174,9 +175,14 @@ def parse_cmdline_args(args):
 
 #--- actions ---
 
-def run_tests(tests, verbose, nthreads=1):
+def run_tests(tests, verbose, cluster_queue=None, nthreads=1):
 
-    jobs = [threading.Thread(target=test.run_test, args=(verbose,))
+    # If submitting tests to a queueing system, then each test actually runs
+    # independently.  Override nthreads.
+    if cluster_queue:
+        nthreads = len(tests)
+
+    jobs = [threading.Thread(target=test.run_test, args=(verbose, cluster_queue))
             for test in tests]
     if nthreads > 1:
         for job in jobs:
@@ -353,7 +359,7 @@ def main(args):
 
     start_status(tests, 'run' in actions, verbose)
     if 'run' in actions:
-        run_tests(tests, verbose, options.nthreads)
+        run_tests(tests, verbose, options.cluster_queue, options.nthreads)
         end_status(tests, verbose)
     if 'compare' in actions:
         compare_tests(tests, verbose)
