@@ -125,8 +125,10 @@ config_file: location of the userconfig file, either relative or absolute.'''
         # Programs can be specified relative to the config directory.
         exe = set_program_name(exe, config_directory)
         if 'extract_program' in tp_dict:
+            print('extract', tp_dict['extract_program'])
             tp_dict['extract_program'] = set_program_name(
                                 tp_dict['extract_program'], config_directory)
+            print('extract', tp_dict['extract_program'])
         if 'submit_template' in tp_dict:
             tp_dict['submit_template'] = os.path.join(config_directory,
                                                     tp_dict['submit_template'])
@@ -345,17 +347,23 @@ If the program exists on PATH, then return the full path to that program.
 Otherwise, assume program is given relative to relative_path and hence return
 the full path.
 '''
-    # Does program exist on the user's path?
-    which_popen = subprocess.Popen(['which', program], stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
-    which_popen.wait()
-    if which_popen.returncode == 0:
-        # Program is on user's path.
-        # Return full path to program.
-        program = which_popen.communicate()[0].decode('utf-8').strip()
-    else:
-        # Program is not on user's path.
-        # Assume program is given relative to the specified path.
-        program = os.path.join(relative_path, program)
+    program_path = os.path.join(relative_path, program)
+    if not os.path.exists(program_path):
+        # Program not supplied as a relative or full path.
+        # Does program exist on the user's path?
+        which_popen = subprocess.Popen(['which', program],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        which_popen.wait()
+        if which_popen.returncode == 0:
+            # Program is on user's path.
+            # Return full path to program.
+            program_path = which_popen.communicate()[0].decode('utf-8').strip()
+        else:
+            print('not on path', program, relative_path)
+            # Program is not on user's path.
+            # Assume program is given relative to the specified path.
+            raise exceptions.TestCodeError(
+                    'Cannot find program: %s.' % (program)
+                                          )
 
-    return program
+    return program_path
