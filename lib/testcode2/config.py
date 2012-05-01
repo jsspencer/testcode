@@ -3,6 +3,7 @@
 import copy
 import glob
 import os
+import subprocess
 import time
 
 import testcode2
@@ -41,6 +42,9 @@ config_file: location of the userconfig file, either relative or absolute.'''
         raise exceptions.TestCodeError(
                 'User configuration file %s does not exist.' % (config_file)
                                       )
+    # paths to programs can be specified relative to the config
+    # file.
+    config_directory = os.path.dirname(os.path.abspath(config_file))
 
     userconfig = compat.configparser.RawConfigParser()
     userconfig.optionxform = str # Case sensitive file.
@@ -118,6 +122,14 @@ config_file: location of the userconfig file, either relative or absolute.'''
         for item in default_test_options:
             if userconfig.has_option(section, item):
                 test_dict[item] = userconfig.get(section, item)
+        # Programs can be specified relative to the config directory.
+        exe = set_program_name(exe, config_directory)
+        if 'extract_program' in tp_dict:
+            tp_dict['extract_program'] = set_program_name(
+                                tp_dict['extract_program'], config_directory)
+        if 'submit_template' in tp_dict:
+            tp_dict['submit_template'] = os.path.join(config_directory,
+                                                    tp_dict['submit_template'])
         if 'nprocs' in test_dict:
             test_dict['nprocs'] = int(test_dict['nprocs'])
         if 'inputs_args' in test_dict:
@@ -325,3 +337,25 @@ def select_tests(all_tests, test_categories, selected_categories, prefix=''):
             cat = cat[len(os.path.normpath(prefix))+1:]
             print('WARNING: %s test/category not found.\n' % cat)
     return tests
+
+def set_program_name(program, relative_path):
+    '''Set a full path to the given program.
+
+If the program exists on PATH, then return the full path to that program.
+Otherwise, assume program is given relative to relative_path and hence return
+the full path.
+'''
+    # Does program exist on the user's path?
+    which_popen = subprocess.Popen(['which', program], stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+    which_popen.wait()
+    if which_popen.returncode == 0:
+        # Program is on user's path.
+        # Return full path to program.
+        program = which_popen.communicate()[0].decode('utf-8').strip()
+    else:
+        # Program is not on user's path.
+        # Assume program is given relative to the specified path.
+        program = os.path.join(relative_path, program)
+
+    return program
