@@ -182,8 +182,10 @@ def run_tests(tests, verbose, cluster_queue=None, nthreads=1):
     if cluster_queue:
         nthreads = len(tests)
 
-    jobs = [threading.Thread(target=test.run_test, args=(verbose, cluster_queue))
-            for test in tests]
+    jobs = [threading.Thread(
+                target=test.run_test, args=(verbose, cluster_queue)
+                            )
+                for test in tests]
     if nthreads > 1:
         for job in jobs:
             while threading.activeCount()-1 == nthreads:
