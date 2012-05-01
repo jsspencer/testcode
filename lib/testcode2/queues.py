@@ -19,7 +19,13 @@ class ClusterQueueJob:
         self.job_id = None
         self.submit_file = submit_file
         self.system = system
-        if self.system not in ['PBS']:
+        if self.system == 'PBS':
+            self.submit_cmd = 'qsub'
+            self.queue_cmd = 'qstat'
+            self.job_id_column = 0
+            self.status_column = 4
+            self.finished_status = 'C'
+        else:
             err = 'Queueing system not implemented: %s' % self.system
             raise exceptions.RunError(err)
     def create_submit_file(self, pattern, string, template):
@@ -47,8 +53,7 @@ self.submit_file.
         fsubmit.close()
     def start_job(self):
         '''Submit job to cluster queue.'''
-        if self.system == 'PBS':
-            submit_cmd = ['qsub', self.submit_file]
+        submit_cmd = [self.submit_cmd, self.submit_file]
         try:
             submit_popen = subprocess.Popen(submit_cmd, stdout=subprocess.PIPE,
                                             stderr=subprocess.STDOUT)
@@ -60,16 +65,26 @@ self.submit_file.
             raise exceptions.RunError(err)
     def wait(self):
         '''Returns when job has finished running on the cluster.'''
-        retcode = 0
-        if self.system == 'PBS':
-            qstat_cmd = ['qstat', self.job_id]
-        while retcode == 0:
-            time.sleep(60)
-            # TODO: improve this by examining output from qstat/equivalent
-            # command.
+        running = True
+        # Don't ask the queueing system for the job itself but rather parse the
+        # output from all current jobs and look  gor the job in question. 
+        # This works around the problem where the job_id is not a sufficient
+        # handle to query the system directly (e.g. on the CMTH cluster).
+        qstat_cmd = [self.queue_cmd]
+        while running:
+            time.sleep(15)
             qstat_popen = subprocess.Popen(qstat_cmd, stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE)
             qstat_popen.wait()
-            # If the return code to qstat is non-zero, then the job_id no
-            # longer exists: must have ended one way or the other!
-            retcode = qstat_popen.returncode
+            if qstat_popen.returncode != 0:
+                err = ('Error inspecting queue system: %s' %
+                                                      qstat_popen.communicate())
+                raise exceptions.RunError(err)
+            qstat_out = qstat_popen.communicate()[0]
+            # Assume job has finished unless it appears in the qstat output.
+            running = False
+            for line in qstat_out.splitlines():
+                words = line.split()
+                if words[self.job_id_column] == self.job_id:
+                    running = words[self.status_column] != self.finished_status
+                    break
