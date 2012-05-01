@@ -18,7 +18,7 @@ DIR_LOCK = dir_lock.DirLock()
 
 # Do not change!  Bad things will happen...
 _FILESTEM_TUPLE = (
-                    ('test', 'test,out'),
+                    ('test', 'test.out'),
                     ('error', 'test.err'),
                     ('benchmark', 'benchmark.out'),
                   )
