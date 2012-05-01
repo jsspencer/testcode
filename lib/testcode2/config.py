@@ -125,10 +125,8 @@ config_file: location of the userconfig file, either relative or absolute.'''
         # Programs can be specified relative to the config directory.
         exe = set_program_name(exe, config_directory)
         if 'extract_program' in tp_dict:
-            print('extract', tp_dict['extract_program'])
             tp_dict['extract_program'] = set_program_name(
                                 tp_dict['extract_program'], config_directory)
-            print('extract', tp_dict['extract_program'])
         if 'submit_template' in tp_dict:
             tp_dict['submit_template'] = os.path.join(config_directory,
                                                     tp_dict['submit_template'])
@@ -359,7 +357,6 @@ the full path.
             # Return full path to program.
             program_path = which_popen.communicate()[0].decode('utf-8').strip()
         else:
-            print('not on path', program, relative_path)
             # Program is not on user's path.
             # Assume program is given relative to the specified path.
             raise exceptions.TestCodeError(
