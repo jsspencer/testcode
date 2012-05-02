@@ -102,9 +102,6 @@ config_file: location of the userconfig file, either relative or absolute.'''
             # exe is set to be a key rather than the path to an executable.
             # Expand.
             exe = userconfig.get(section, exe)
-        if 'vcs' in tp_dict:
-            tp_dict['vcs'] = vcs.VCSRepository(tp_dict['vcs'],
-                    os.path.dirname(exe))
         # Create a default test settings.
         # First, tolerances...
         if userconfig.has_option(section, 'tolerance'):
@@ -139,6 +136,9 @@ config_file: location of the userconfig file, either relative or absolute.'''
         # Create a default test.
         tp_dict['default_test_settings'] = testcode2.Test(None, None,
                 **test_dict)
+        if 'vcs' in tp_dict:
+            tp_dict['vcs'] = vcs.VCSRepository(tp_dict['vcs'],
+                    os.path.dirname(exe))
         program = testcode2.TestProgram(section, exe, test_id,
             user_options['benchmark'], **tp_dict)
         test_programs[section] = program
