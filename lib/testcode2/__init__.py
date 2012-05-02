@@ -340,6 +340,9 @@ Assume function is executed in self.path.'''
                     util.testcode_filename(FILESTEM['test'],
                             tp_ptr.test_id, input_file, args),
                          ]
+            if verbose:
+                print('Analysing output using data_tag %s in %s on files %s.' %
+                        (tp_ptr.data_tag, self.path, ' and '.join(data_files)))
             outputs = [util.extract_tagged_data(tp_ptr.data_tag, dfile)
                     for dfile in data_files]
         else:
