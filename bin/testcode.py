@@ -74,10 +74,10 @@ def parse_cmdline_args(args):
             'userconfig file.')
     parser.add_option('-c', '--category', action='append', default=[],
             help='Select the category/group of tests.  Can be specified '
-            'multiple times.  Default: all tests if make-benchmarks is one of '
-            'the actions, the _default_ category for other actions, where the '
-            '_default_ category contains all tests unless otherwise set in '
-            'jobconfig.')
+            'multiple times.  Default: use the _default_ category if run is an '
+            'action unless make-benchmarks is an action.  All other cases use '
+            'the _all_ category by default.  The _default_ category contains '
+            'all  tests unless otherwise set in the jobconfig file.')
     parser.add_option('-e', '--executable', action='append', default=[],
             help='Set the executable(s) to be used to run the tests.  Can be '
             ' a path or name of an option in the userconfig file, in which'
@@ -124,9 +124,11 @@ def parse_cmdline_args(args):
 
     # Default category.
     if not options.category:
-        options.category = ['_default_']
-        if 'make-benchmarks' in args:
-            options.category = ['_all_']
+        # We quietly filter out tests which weren't run last when diffing
+        # or comparing.
+        options.category = ['_all_']
+        if 'run' in args and 'make-benchmarks' not in args:
+            options.category = ['_default_']
 
     test_args = (arg not in allowed_actions for arg in args)
     if testcode2.compatibility.compat_any(test_args):
@@ -202,9 +204,24 @@ def run_tests(tests, verbose, cluster_queue=None, nthreads=1):
 
 def compare_tests(tests, verbose):
 
+    nskipped = 0
+
     for test in tests:
         for (inp, args) in test.inputs_args:
-            test.verify_job(inp, args, verbose)
+            test_file = testcode2.util.testcode_filename(
+                    testcode2.FILESTEM['test'],
+                    test.test_program.test_id, inp, args
+                    )
+            test_file = os.path.join(test.path, test_file)
+            if os.path.exists(test_file):
+                test.verify_job(inp, args, verbose)
+            else:
+                if verbose:
+                    print('Skipping comparison.  '
+                          'Test file does not exist: %s.\n' % test_file)
+                nskipped += 1
+
+    return nskipped
 
 def diff_tests(tests, diff_program, verbose):
 
@@ -223,13 +240,13 @@ def diff_tests(tests, diff_program, verbose):
             if verbose:
                 print('Diffing %s and %s in %s.' % (benchmark, test_file,
                     test.path))
-            for diff_file  in [test_file, benchmark]:
-                if not os.path.exists(diff_file):
-                    err = '%s does not exist.' % diff_file
-                    raise testcode2.exceptions.TestCodeError(err)
-            diff_cmd = '%s %s %s' % (diff_program, benchmark, test_file)
-            diff_popen = subprocess.Popen(diff_cmd, shell=True)
-            diff_popen.wait()
+            if not os.path.exists(test_file) or not os.path.exists(benchmark):
+                if verbose:
+                    print('Skipping diff: %s does not exist.' % diff_file)
+            else:
+                diff_cmd = '%s %s %s' % (diff_program, benchmark, test_file)
+                diff_popen = subprocess.Popen(diff_cmd, shell=True)
+                diff_popen.wait()
         os.chdir(cwd)
 
 def tidy_tests(tests, ndays, submit_templates=None):
@@ -324,20 +341,25 @@ def start_status(tests, running, verbose):
         print('Benchmark: %s.' % (tests[0].test_program.benchmark))
         print('')
 
-def end_status(tests, verbose):
+def end_status(tests, skipped=0, verbose=True):
 
     statuses = [test.get_status() for test in tests]
     npassed = sum(status[0] for status in statuses)
     nran = sum(status[1] for status in statuses)
 
+    if skipped != 0:
+        skipped_msg = '  (Skipped: %s.)'  % (skipped)
+    else:
+        skipped_msg = ''
+
     if verbose:
-        msg = 'All done.  %s%s out of %s tests passed.' 
+        msg = 'All done.  %s%s out of %s tests passed.' + skipped_msg 
         if npassed == nran:
             print(msg % ('', npassed, nran))
         else:
             print(msg % ('WARNING: only ', npassed, nran))
     else:
-        print(' [%s/%s]'% (npassed, nran))
+        print(' [%s/%s]%s'% (npassed, nran, skipped_msg))
 
 #--- main runner ---
 
@@ -362,10 +384,10 @@ def main(args):
     start_status(tests, 'run' in actions, verbose)
     if 'run' in actions:
         run_tests(tests, verbose, options.queue_system, options.nthreads)
-        end_status(tests, verbose)
+        end_status(tests, 0, verbose)
     if 'compare' in actions:
-        compare_tests(tests, verbose)
-        end_status(tests, verbose)
+        nskipped = compare_tests(tests, verbose)
+        end_status(tests, nskipped, verbose)
     if 'diff' in actions:
         diff_tests(tests, user_options['diff'], verbose)
     if 'tidy' in actions:
