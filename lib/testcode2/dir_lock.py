@@ -47,7 +47,14 @@ functions.
                 '''Function decorated by Lock.in_dir.'''
                 cwd = os.getcwd()
                 os.chdir(ddir)
-                val = func(*args, **kwargs)
+                try:
+                    val = func(*args, **kwargs)
+                except Exception:
+                    # func has raised an error.  Return to the original
+                    # directory and then re-raise the error to allow the caller
+                    # to handle it.
+                    os.chdir(cwd)
+                    raise
                 os.chdir(cwd)
                 return val
             return decorated_func
