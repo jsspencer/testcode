@@ -1,4 +1,26 @@
 #!/usr/bin/env python
+'''testcode2 [options] [action1 [action2...]]
+
+testcode2 is a simple framework for comparing output from (principally numeric)
+programs to previous output to reveal regression errors or miscompilation.
+
+Run a set of actions on a set of tests.
+
+Available actions:
+  compare               compare set of test outputs from a previous testcode2
+                        run against the benchmark outputs.
+  compare               diff set of test outputs from a previous testcode2
+                        run against the benchmark outputs.
+  make-benchmarks       create a new set of benchmarks and update the userconfig
+                        file with the new benchmark id.  Also runs the 'run'
+                        action unless the 'compare' action is also given.
+  run                   run a set of tests and compare against the benchmark
+                        outputs.  Default action.
+  tidy                  Remove files from previous testcode2 runs from the test
+                        directories.
+
+Requires two configuration files, jobconfig and userconfig.  See testcode2
+documentation for further details.'''
 
 import glob
 import optparse
@@ -27,6 +49,31 @@ import testcode2.compatibility
 def init_tests(userconfig, jobconfig, test_id, reuse_id, executables=None,
         categories=None, nprocs=0, benchmark=None, userconfig_options=None,
         jobconfig_options=None):
+    '''Initialise tests from the configuration files and command-line options.
+
+userconfig, executables, test_id and userconfig_options are passed to
+testcode2.config.userconfig.
+
+jobconfig and jobconfig_options are passed to testcode2.config.parse_jobconfig.
+
+categories is passed to testcode2.config.select_tests.
+
+test_id is used to set the test identifier.  If test_id is null and reused_id
+is true, then the identifier is set to that of the last tests ran by testcode
+otherwise a unique identifier based upon the date is used.
+
+nprocs is the number of processors each test is run on.  If zero, the defaults
+in the configuration files are used.
+
+benchmark is the benchmark id labelling the set of benchmarks to compare the
+tests too.  If None, the default in userconfig is used.
+
+Returns:
+
+user_options: dictionary containing user options specified in userconfig.
+test_programs: dict of the test programs defined in userconfig.
+tests: list of selected tests.
+'''
 
     (user_options, test_programs) = testcode2.config.parse_userconfig(
             userconfig, executables, test_id, userconfig_options)
@@ -62,10 +109,18 @@ def init_tests(userconfig, jobconfig, test_id, reuse_id, executables=None,
 #--- create command line interface ---
 
 def parse_cmdline_args(args):
+    '''Parse command line arguments.
+
+args: list of supplied arguments.
+
+Returns:
+
+options: object returned by optparse containing the options.
+actions: list of testcode2 actions to run.
+'''
 
     # Curse not being able to use argparse in order to support python <= 2.7!
-    # TODO: usage string.
-    parser = optparse.OptionParser()
+    parser = optparse.OptionParser(usage=__doc__)
 
     allowed_actions = ['compare', 'run', 'diff', 'tidy', 'make-benchmarks']
 
@@ -93,8 +148,8 @@ def parse_cmdline_args(args):
     parser.add_option('-n', '--nthreads', type='int', default=1, help='Set the '
             'number of tests to run concurrently.  Default: %default.')
     parser.add_option('--older-than', type='int', dest='older_than', default=14,
-            help='Set the age (in days) of files to remove.  '
-            'Default: %default days.')
+            help='Set the age (in days) of files to remove.  Only relevant to '
+            'the tidy action.  Default: %default days.')
     parser.add_option('-p', '--processors', type='int', dest='nprocs',
             help='Set the number of processors to run each test on.  '
             'Default: run tests as serial jobs.')
@@ -178,7 +233,14 @@ def parse_cmdline_args(args):
 #--- actions ---
 
 def run_tests(tests, verbose, cluster_queue=None, nthreads=1):
+    '''Run tests.
 
+tests: list of tests.
+verbose: print verbose output if true.
+cluster_queue: name of cluster system to use.  If None, tests are run locally.
+    Currently only PBS is implemented.
+nthreads: number of concurrent tests to run.
+'''
     # If submitting tests to a queueing system, then each test actually runs
     # independently.  Override nthreads.
     if cluster_queue:
@@ -203,6 +265,11 @@ def run_tests(tests, verbose, cluster_queue=None, nthreads=1):
 
 
 def compare_tests(tests, verbose):
+    '''Compare tests.
+
+tests: list of tests.
+verbose: print verbose output if true.
+'''
 
     nskipped = 0
 
@@ -224,6 +291,12 @@ def compare_tests(tests, verbose):
     return nskipped
 
 def diff_tests(tests, diff_program, verbose):
+    '''Diff tests.
+
+tests: list of tests.
+diff_program: diff program to use.
+verbose: print verbose output if true.
+'''
 
     for test in tests:
         cwd = os.getcwd()
@@ -250,6 +323,13 @@ def diff_tests(tests, diff_program, verbose):
         os.chdir(cwd)
 
 def tidy_tests(tests, ndays, submit_templates=None):
+    '''Tidy up test directories.
+
+tests: list of tests.
+ndays: test files older than ndays are deleted.
+submit_templates: list of submit templates used in submitting tests to
+    a cluster.  The submit files created from the templates are also deleted.
+'''
 
     epoch_time = time.time() - 86400*ndays
 
@@ -278,6 +358,14 @@ def tidy_tests(tests, ndays, submit_templates=None):
             os.chdir(cwd)
 
 def make_benchmarks(test_programs, tests, userconfig, copy_files_since):
+    '''Make a new set of benchmarks.
+
+test_programs: dictionary of test programs.
+tests: list of tests.
+userconfig: path to the userconfig file.  This is updated with the new benchmark id.
+copy_files_since: files produced since the timestamp (in seconds since the
+    epoch) are copied to the testcode_data subdirectory in each test.
+'''
 
     # All tests passed?
     statuses = [test.get_status() for test in tests]
@@ -329,6 +417,12 @@ def make_benchmarks(test_programs, tests, userconfig, copy_files_since):
 #--- info output ---
 
 def start_status(tests, running, verbose):
+    '''Print a header containing useful information.
+
+tests: list of tests.
+running: true if tests are to be run.
+verbose: true if output is required; if false no output is produced.
+'''
 
     if verbose:
         exes = [test.test_program.exe for test in tests]
@@ -342,6 +436,13 @@ def start_status(tests, running, verbose):
         print('')
 
 def end_status(tests, skipped=0, verbose=True):
+    '''Print a footer containing useful information.
+
+tests: list of tests.
+skipped: number of tests skipped (ie not run or compared).
+verbose: if true additional output is produced; if false a minimal status is
+    produced containing the same amount of output.
+'''
 
     statuses = [test.get_status() for test in tests]
     npassed = sum(status[0] for status in statuses)
@@ -364,6 +465,10 @@ def end_status(tests, skipped=0, verbose=True):
 #--- main runner ---
 
 def main(args):
+    '''main controller procedure.
+
+args: command-line arguments passed to testcode2.
+'''
 
     start_time = time.time()
 
