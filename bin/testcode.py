@@ -242,7 +242,7 @@ def diff_tests(tests, diff_program, verbose):
                     test.path))
             if not os.path.exists(test_file) or not os.path.exists(benchmark):
                 if verbose:
-                    print('Skipping diff: %s does not exist.' % diff_file)
+                    print('Skipping diff: %s does not exist.' % test_file)
             else:
                 diff_cmd = '%s %s %s' % (diff_program, benchmark, test_file)
                 diff_popen = subprocess.Popen(diff_cmd, shell=True)
