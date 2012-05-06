@@ -1,4 +1,12 @@
-'''testcode2, a framework for regression testing numerical programs.'''
+'''
+testcode2
+---------
+
+A framework for regression testing numerical programs.
+
+:copyright: (c) 2012 James Spencer.
+:license: modified BSD; see LICENSE for more details.
+'''
 
 import glob
 import os

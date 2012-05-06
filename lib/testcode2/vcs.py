@@ -1,4 +1,12 @@
-'''Lightweight access to required version control system functions.'''
+'''
+testcode2.vcs
+-------------
+
+Lightweight access to required version control system functions.
+
+:copyright: (c) 2012 James Spencer.
+:license: modified BSD; see LICENSE for more details.
+'''
 
 import os
 import subprocess

@@ -1,4 +1,12 @@
-'''Custom exceptions.  Initialise signal handler for the interrupt signal'''
+'''
+testcode2.exceptions
+--------------------
+
+Custom exceptions.  Initialise signal handler for the interrupt signal.
+
+:copyright: (c) 2012 James Spencer.
+:license: modified BSD; see LICENSE for more details.
+'''
 
 import signal
 import sys

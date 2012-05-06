@@ -1,4 +1,12 @@
-'''Threading lock initialisation and helper.'''
+'''
+testcode2.dir_lock
+------------------
+
+Threading lock initialisation and helper.
+
+:copyright: (c) 2012 James Spencer.
+:license: modified BSD; see LICENSE for more details.
+'''
 
 import os
 import threading

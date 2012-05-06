@@ -22,6 +22,9 @@ Available actions:
 Requires two configuration files, jobconfig and userconfig.  See testcode2
 documentation for further details.'''
 
+# copyright: (c) 2012 James Spencer
+# license: modified BSD; see LICENSE for more details
+
 import glob
 import optparse
 import os

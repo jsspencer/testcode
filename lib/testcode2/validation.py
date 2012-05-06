@@ -1,4 +1,12 @@
-'''Classes and functions for comparing data.'''
+'''
+testcode2.validation
+--------------------
+
+Classes and functions for comparing data.
+
+:copyright: (c) 2012 James Spencer.
+:license: modified BSD; see LICENSE for more details.
+'''
 
 import testcode2.compatibility as compat
 

@@ -1,4 +1,12 @@
-'''Utility functions.'''
+'''
+testcode2.util
+--------------
+
+Utility functions.
+
+:copyright: (c) 2012 James Spencer.
+:license: modified BSD; see LICENSE for more details.
+'''
 
 import os.path
 import re

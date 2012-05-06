@@ -1,4 +1,12 @@
-'''Access to external queueing systems.'''
+'''
+testcode.queues
+---------------
+
+Access to external queueing systems.
+
+:copyright: (c) 2012 James Spencer.
+:license: modified BSD; see LICENSE for more details.
+'''
 
 import os.path
 import subprocess

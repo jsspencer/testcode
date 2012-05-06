@@ -1,4 +1,12 @@
-'''Parse jobconfig and userconfig ini files.'''
+'''
+testcode2.config
+----------------
+
+Parse jobconfig and userconfig ini files.
+
+:copyright: (c) 2012 James Spencer.
+:license: modified BSD; see LICENSE for more details.
+'''
 
 import copy
 import glob

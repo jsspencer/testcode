@@ -1,4 +1,8 @@
-'''Functions for compatibility with different versions of python.
+'''
+testcode2.compatibility
+-----------------------
+
+Functions for compatibility with different versions of python.
 
 testcode2 is developed using python 3.2; these statements exist to enable
 testcode to function transparently (i.e. without using 2to3) on python 2.4
@@ -11,7 +15,11 @@ import testcode2.compatibility as compat
 
 var = compat.compat_set([1,2,3,1])
 
-in the main source code.'''
+in the main source code.
+
+:copyright: (c) 2012 James Spencer.
+:license: modified BSD; see LICENSE for more details.
+'''
 
 ### python 2.4 ###
 
