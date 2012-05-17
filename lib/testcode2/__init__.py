@@ -72,6 +72,11 @@ class TestProgram:
         for (attr, val) in kwargs.items():
             setattr(self, attr, val)
 
+        # If using an external verification program, then set the default
+        # extract command template.
+        if self.verify and 'extract_cmd_template' not in kwargs:
+            self.extract_cmd_template = 'tc.extract tc.args tc.test tc.bench'
+
     def run_cmd(self, input_file, args, nprocs=0):
         '''Create run command.'''
         output_file = util.testcode_filename(FILESTEM['test'], self.test_id,
