@@ -29,6 +29,7 @@ new tests.
 .. toctree::
    :maxdepth: 1
 
+   installation
    configuration_files
    jobconfig
    userconfig
