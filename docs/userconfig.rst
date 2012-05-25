@@ -106,7 +106,7 @@ submit_pattern [string]
     testcode.run_cmd.
 submit_template [string]
     Path to a template of a submit script used to submit jobs to a queueing
-    system.  testcode2 will replace the string given in submit_pattern with the
+    system.  testcode will replace the string given in submit_pattern with the
     command(s) to run the test.  The submit script must do all other actions (e.g.
     setting environment variables, loading modules, copying files from the test
     directory to a local disk and copying files back afterwards).  No default.

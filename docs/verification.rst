@@ -1,22 +1,22 @@
 Test verification
 =================
 
-testcode2 compares selected data from an output with previously obtained output
+testcode compares selected data from an output with previously obtained output
 (the 'benchmark'); a test passes if all data is within a desired tolerance.
 The data can be compared using an absolute tolerance and/or a relative
-tolerance.  testcode2 needs some way of knowing what data from the output files
+tolerance.  testcode needs some way of knowing what data from the output files
 should be validated.  There are three options.
 
 * label output with a 'data tag'
 
-  If a data tag is supplied, then testcode2 will search each output file for
+  If a data tag is supplied, then testcode will search each output file for
   lines starting with that tag.  The first numerical entry on those lines will
   then be checked against the benchmark.  For example, if the data tag is set
   to be '[QA]', and the line
 
       [QA] Energy = 1.23456 eV
 
-  appears in the test output, then testcode2 will ensure the value 1.23456 is
+  appears in the test output, then testcode will ensure the value 1.23456 is
   identical (within the specified tolerance) to the equivalent line in the
   benchmark output.  The text preceding the value is used to label that data
   item; lines with identical text but different values are handled but it is

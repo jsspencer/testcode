@@ -5,7 +5,7 @@ testcode.py
 
 .. only:: html
 
-    testcode.py - a command-line interface to testcode2.
+    testcode.py - a command-line interface to testcode.
 
 Synopsis
 --------
@@ -18,9 +18,9 @@ Description
 Run a set of actions on a set of tests.
 
 Requires two configuration files, :ref:`jobconfig` and :ref:`userconfig`.  See
-testcode2 documentation for further details.
+testcode documentation for further details.
 
-testcode.py provides a command-line interface to testcode2, a simple framework
+testcode.py provides a command-line interface to testcode, a simple framework
 for comparing output from (principally numeric) programs to previous output to
 reveal regression errors or miscompilation.
 
@@ -30,10 +30,10 @@ Actions
 ''run'' is th default action.
 
 compare
-    compare set of test outputs from a previous testcode2 run against the
+    compare set of test outputs from a previous testcode run against the
     benchmark outputs.
 compare
-    diff set of test outputs from a previous testcode2 run against the benchmark
+    diff set of test outputs from a previous testcode run against the benchmark
     outputs.
 make-benchmarks
     create a new set of benchmarks and update the :ref:`userconfig` file with
@@ -42,7 +42,7 @@ make-benchmarks
 run
     run a set of tests and compare against the benchmark outputs.
 tidy
-    Remove files from previous testcode2 runs from the test directories.
+    Remove files from previous testcode runs from the test directories.
 
 Options
 -------
