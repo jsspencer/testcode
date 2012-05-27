@@ -49,7 +49,7 @@ class TestProgram:
         self.test_id = test_id
         self.run_cmd_template = ('tc.program tc.args tc.input > '
                                                     'tc.output 2> tc.error')
-        self.launch_parallel = 'mpirun'
+        self.launch_parallel = 'mpirun -np tc.nprocs'
         self.submit_template = None
         self.submit_pattern = 'testcode.run_cmd'
 
@@ -102,7 +102,8 @@ class TestProgram:
         cmd = cmd.replace('tc.output', output_file)
         cmd = cmd.replace('tc.error', error_file)
         if nprocs > 0 and self.launch_parallel:
-            cmd = '%s -np %s %s' % (self.launch_parallel, nprocs, cmd)
+            cmd = '%s %s' % (self.launch_parallel, cmd)
+        cmd = cmd.replace('tc.nprocs', nprocs)
         return cmd
 
     def extract_cmd(self, input_file, args):

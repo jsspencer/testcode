@@ -77,7 +77,10 @@ extract_program [string]
     Path to program to use to extract data from test and benchmark output.
     No default.
 launch_parallel [string]
-    Command used to run the test program in parallel.  Default: mpirun.
+    Command template used to run the test program in parallel.  tc.nprocs is
+    replaced with the number of processors a test uses (see run_cmd_template).
+    If tc.nprocs does not appear, then testcode has no control over the number
+    of processors a test is run on.  Default: mpirun -np tc.nprocs.
 run_cmd_template [string]
     Template of command used to run the program on the test with the following
     substitutions made:
@@ -94,11 +97,12 @@ run_cmd_template [string]
         tc.error
             replaced with the filename for the error output.  The filename is
             selected at runtime.
+        tc.nprocs
+            replaced with the number of processors the test is run on.
 
     Default: 'tc.program tc.args tc.input > tc.output 2> tc.error' in serial
-    and 'launch_command -np nprocs tc.program tc.args tc.input > tc.output 2>
-    tc.error' in parallel, where launch_command is specified above and nprocs
-    is the number of processors to run the test on.  The parallel version is
+    and 'launch_command tc.program tc.args tc.input > tc.output 2> tc.error' in
+    parallel, where launch_command is specified above The parallel version is
     only used if the number of processors to run a test on is greater than
     zero.
 submit_pattern [string]
