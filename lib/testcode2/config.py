@@ -365,10 +365,9 @@ the full path.
             # Return full path to program.
             program_path = which_popen.communicate()[0].decode('utf-8').strip()
         else:
-            # Program is not on user's path.
-            # Assume program is given relative to the specified path.
-            raise exceptions.TestCodeError(
-                    'Cannot find program: %s.' % (program)
-                                          )
+            # Cannot find program.
+            # This still allows us to manipulate previously run tests, just not
+            # run new ones...
+            print('WARNING: cannot find program: %s.' % (program))
 
     return program_path
