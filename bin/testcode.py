@@ -148,8 +148,9 @@ actions: list of testcode2 actions to run.
             default=[], nargs=3, help='Override/add setting to jobconfig.  '
             'Takes three arguments.  Format: section_name option_name value.  '
             'Default: none.')
-    parser.add_option('-n', '--nthreads', type='int', default=1, help='Set the '
-            'number of tests to run concurrently.  Default: %default.')
+    parser.add_option('-n', '--nthreads', type='int', default=-1, help='Set the '
+            'number of tests to run concurrently.  Default: number of test jobs '
+            'to run if --submit is used; 1 otherwise.')
     parser.add_option('--older-than', type='int', dest='older_than', default=14,
             help='Set the age (in days) of files to remove.  Only relevant to '
             'the tidy action.  Default: %default days.')
@@ -242,12 +243,16 @@ tests: list of tests.
 verbose: print verbose output if true.
 cluster_queue: name of cluster system to use.  If None, tests are run locally.
     Currently only PBS is implemented.
-nthreads: number of concurrent tests to run.
+nthreads: number of concurrent tests to run.  If less than 1, then either one
+    thread per test is used if cluster_queue is set (i.e. each test object is
+    handled individually) or only one thread is used if cluster_queue is not
+    set.
 '''
-    # If submitting tests to a queueing system, then each test actually runs
-    # independently.  Override nthreads.
-    if cluster_queue:
-        nthreads = len(tests)
+    if nthreads < 1:
+        if cluster_queue:
+            nthreads = len(tests)
+        else:
+            nthreads = 1
 
     jobs = [threading.Thread(
                 target=test.run_test, args=(verbose, cluster_queue)

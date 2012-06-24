@@ -73,7 +73,8 @@ Options
     section_name option_name value.  Default: none.
 -n NTHREADS, --nthreads=NTHREADS
     Set the number of tests to run concurrently.  Only relevant to the run
-    action.  Default: 1.
+    action.  Default: number of test jobs to run if --submit is used;
+    1 otherwise.
 --older-than=OLDER_THAN
     Set the age (in days) of files to remove.  Only relevant to the tidy
     action.  Default: 14 days.
