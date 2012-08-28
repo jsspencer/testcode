@@ -103,7 +103,7 @@ class TestProgram:
         cmd = cmd.replace('tc.error', error_file)
         if nprocs > 0 and self.launch_parallel:
             cmd = '%s %s' % (self.launch_parallel, cmd)
-        cmd = cmd.replace('tc.nprocs', nprocs)
+        cmd = cmd.replace('tc.nprocs', str(nprocs))
         return cmd
 
     def extract_cmd(self, input_file, args):
