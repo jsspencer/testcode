@@ -143,8 +143,8 @@ of removing additional whitespace.'''
             clen += len(string)
         else:
             wrapped_strings.append(' '.join(cstring))
-            cstring = []
-            clen = 0
+            cstring = [string]
+            clen = len(string)
     if cstring:
         wrapped_strings.append(' '.join(cstring))
     return wrapped_strings
