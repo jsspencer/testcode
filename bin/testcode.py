@@ -50,7 +50,7 @@ import testcode2.compatibility
 #--- testcode initialisation ---
 
 def init_tests(userconfig, jobconfig, test_id, reuse_id, executables=None,
-        categories=None, nprocs=0, benchmark=None, userconfig_options=None,
+        categories=None, nprocs=-1, benchmark=None, userconfig_options=None,
         jobconfig_options=None):
     '''Initialise tests from the configuration files and command-line options.
 
@@ -65,8 +65,8 @@ test_id is used to set the test identifier.  If test_id is null and reused_id
 is true, then the identifier is set to that of the last tests ran by testcode
 otherwise a unique identifier based upon the date is used.
 
-nprocs is the number of processors each test is run on.  If zero, the defaults
-in the configuration files are used.
+nprocs is the number of processors each test is run on.  If negative, the
+defaults in the configuration files are used.
 
 benchmark is the benchmark id labelling the set of benchmarks to compare the
 tests too.  If None, the default in userconfig is used.
@@ -90,7 +90,7 @@ tests: list of selected tests.
             jobconfig, user_options, test_programs, jobconfig_options)
 
     # Set number of processors...
-    if nprocs:
+    if nprocs >= 0:
         for test in tests:
             if not test.override_nprocs:
                 test.nprocs = nprocs
@@ -154,9 +154,9 @@ actions: list of testcode2 actions to run.
     parser.add_option('--older-than', type='int', dest='older_than', default=14,
             help='Set the age (in days) of files to remove.  Only relevant to '
             'the tidy action.  Default: %default days.')
-    parser.add_option('-p', '--processors', type='int', dest='nprocs',
+    parser.add_option('-p', '--processors', type='int', default=-1, dest='nprocs',
             help='Set the number of processors to run each test on.  '
-            'Default: run tests as serial jobs.')
+            'Default: use settings in configuration files.')
     parser.add_option('-q', '--quiet', action='store_false', dest='verbose',
             default=True, help='Print only minimal output.  Default: False.')
     parser.add_option('-s', '--submit', dest='queue_system', default=None,
