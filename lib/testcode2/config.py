@@ -230,6 +230,8 @@ config_file: location of the jobconfig file, either relative or absolute.'''
         # Other options.
         for option in jobconfig.options(section):
             test_dict[option] = jobconfig.get(section, option)
+        if 'nprocs' in test_dict:
+            test_dict['nprocs'] = int(test_dict['nprocs'])
         # Expand any globs in the input files.
         if 'path' in test_dict:
             path = os.path.join(config_directory, test_dict['path'])
