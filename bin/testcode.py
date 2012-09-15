@@ -148,15 +148,15 @@ actions: list of testcode2 actions to run.
             default=[], nargs=3, help='Override/add setting to jobconfig.  '
             'Takes three arguments.  Format: section_name option_name value.  '
             'Default: none.')
-    parser.add_option('-n', '--nthreads', type='int', default=-1, help='Set the '
-            'number of tests to run concurrently.  Default: number of test jobs '
-            'to run if --submit is used; 1 otherwise.')
+    parser.add_option('-n', '--nthreads', type='int', default=-1, help='Set the'
+            ' number of tests to run concurrently.  Default: number of test '
+            'jobs to run if --submit is used; 1 otherwise.')
     parser.add_option('--older-than', type='int', dest='older_than', default=14,
             help='Set the age (in days) of files to remove.  Only relevant to '
             'the tidy action.  Default: %default days.')
-    parser.add_option('-p', '--processors', type='int', default=-1, dest='nprocs',
-            help='Set the number of processors to run each test on.  '
-            'Default: use settings in configuration files.')
+    parser.add_option('-p', '--processors', type='int', default=-1,
+            dest='nprocs', help='Set the number of processors to run each test '
+            'on.  Default: use settings in configuration files.')
     parser.add_option('-q', '--quiet', action='store_false', dest='verbose',
             default=True, help='Print only minimal output.  Default: False.')
     parser.add_option('-s', '--submit', dest='queue_system', default=None,
