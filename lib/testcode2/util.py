@@ -104,6 +104,7 @@ and
     # Convert to numbers where appropriate
     data = [[try_floatify(val) for val in dline] for dline in data]
     data_dict = {}
+    head = []
     for dline in data:
         # Test if all items are strings; if so start a new subtable.
         # We actually test if all items are not floats, as python 3 can return
@@ -118,6 +119,9 @@ and
                 if val not in data_dict:
                     data_dict[val] = []
         else:
+            if len(dline) > len(head):
+                err = 'Table missing column heading(s):\n%s' % (table_string)
+                raise exceptions.RunError(err)
             for (ind, val) in enumerate(dline):
                 # Add data to appropriate key.
                 # Note that this handles the case where the same column heading
