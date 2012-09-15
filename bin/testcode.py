@@ -46,6 +46,7 @@ except ImportError:
 import testcode2.config
 import testcode2.util
 import testcode2.compatibility
+import testcode2.exceptions
 
 #--- testcode initialisation ---
 
@@ -148,9 +149,6 @@ actions: list of testcode2 actions to run.
             default=[], nargs=3, help='Override/add setting to jobconfig.  '
             'Takes three arguments.  Format: section_name option_name value.  '
             'Default: none.')
-    parser.add_option('-n', '--nthreads', type='int', default=-1, help='Set the'
-            ' number of tests to run concurrently.  Default: number of test '
-            'jobs to run if --submit is used; 1 otherwise.')
     parser.add_option('--older-than', type='int', dest='older_than', default=14,
             help='Set the age (in days) of files to remove.  Only relevant to '
             'the tidy action.  Default: %default days.')
@@ -165,6 +163,11 @@ actions: list of testcode2 actions to run.
     parser.add_option('-t', '--test-id', dest='test_id', help='Set the file ID '
             'of the test outputs.  Default: unique filename based upon date '
             'if running tests and most recent test_id if comparing tests.')
+    parser.add_option('--total-processors', type='int', default=-1,
+            dest='tot_nprocs', help='Set the total number of processors to use '
+            'to run tests concurrently.  Relevant only to the run option.  '
+            'Default: run all tests concurrently run if --submit is used; run '
+            'tests sequentially otherwise.')
     parser.add_option('--userconfig', default='userconfig', help='Set path to '
             'the user configuration file.  Default: %default.')
     parser.add_option('--user-option', action='append', dest='user_option',
@@ -175,7 +178,7 @@ actions: list of testcode2 actions to run.
     (options, args) = parser.parse_args(args)
 
     # Default action.
-    if not args or ('make-benchmarks' in args and 'compare' not in args 
+    if not args or ('make-benchmarks' in args and 'compare' not in args
             and 'run' not in args):
         # Run tests by default if no action provided.
         # Run tests before creating benchmark by default.
@@ -222,11 +225,11 @@ actions: list of testcode2 actions to run.
                 'when running calculations.')
         sys.exit(1)
     testcode2.FILESTEM = filestem.copy()
-    
+
     # Convert job-options and user-options to dict of dicsts format.
     for item in ['user_option', 'job_option']:
         uj_opt = getattr(options, item)
-        opt = dict( (section, {}) for section in 
+        opt = dict( (section, {}) for section in
                 testcode2.compatibility.compat_set(opt[0] for opt in uj_opt) )
         for (section, option, value) in uj_opt:
             opt[section][option] = value
@@ -236,40 +239,75 @@ actions: list of testcode2 actions to run.
 
 #--- actions ---
 
-def run_tests(tests, verbose, cluster_queue=None, nthreads=1):
+def run_tests(tests, verbose, cluster_queue=None, tot_nprocs=0):
     '''Run tests.
 
 tests: list of tests.
 verbose: print verbose output if true.
 cluster_queue: name of cluster system to use.  If None, tests are run locally.
     Currently only PBS is implemented.
-nthreads: number of concurrent tests to run.  If less than 1, then either one
-    thread per test is used if cluster_queue is set (i.e. each test object is
-    handled individually) or only one thread is used if cluster_queue is not
-    set.
+tot_nprocs: total number of processors available to run tests on.  As many
+    tests (in a LIFO fashion from the tests list) are run at the same time as
+    possible without using more processors than this value.  If less than 1 and
+    cluster_queue is specified, then all tests are submitted to the cluster at
+    the same time.  If less than one and cluster_queue is not set, then
+    tot_nprocs is ignored and the tests are run sequentially (default).
 '''
-    if nthreads < 1:
-        if cluster_queue:
-            nthreads = len(tests)
-        else:
-            nthreads = 1
+    def run_test_worker(semaphore, semaphore_lock, test, *run_test_args):
+        '''Launch a test after waiting until resources are available to run it.
 
-    jobs = [threading.Thread(
-                target=test.run_test, args=(verbose, cluster_queue)
-                            )
-                for test in tests]
-    if nthreads > 1:
+semaphore: threading.Semaphore object containing the number of cores/processors
+    which can be used concurrently to run tests.
+semaphore.lock: threading.Lock object used to restrict acquiring the semaphore
+    to one thread at a time.
+test: test to run.
+run_test_args: arguments to pass to test.run_test method.
+'''
+
+        # Ensure that only one test attempts to register resources with the
+        # semaphore at a time.  This restricts running the tests to a LIFO
+        # fashion which is not perfect (we don't attempt to backfill with
+        # smaller tests, for example) but is a reasonable and (most
+        # importantly) simple first-order approach.
+        semaphore_lock.acquire()
+        # test.nprocs is <1 when program is run in serial.
+        nprocs_used = max(1, test.nprocs)
+        for i in range(nprocs_used):
+            semaphore.acquire()
+        semaphore_lock.release()
+
+        test.run_test(*run_test_args)
+
+        for i in range(nprocs_used):
+            semaphore.release()
+
+    if tot_nprocs <= 0 and cluster_queue:
+        # Running on cluster.  Default to submitting all tests at once.
+        tot_nprocs = sum(test.nprocs for test in tests)
+
+    if tot_nprocs > 0:
+        # Allow at most tot_nprocs cores to be used at once by tests.
+        max_test_nprocs = max(test.nprocs for test in tests)
+        if max_test_nprocs > tot_nprocs:
+            err = ('Number of available cores less than the number required by '
+                   'the largest test: at least %d needed, %d available.'
+                   % (max_test_nprocs, tot_nprocs))
+            raise testcode2.exceptions.TestCodeError(err)
+        semaphore = threading.BoundedSemaphore(tot_nprocs)
+        slock = threading.Lock()
+        jobs = [threading.Thread(
+                    target=run_test_worker,
+                    args=(semaphore, slock, test, verbose, cluster_queue)
+                                )
+                    for test in tests]
         for job in jobs:
-            while threading.activeCount()-1 == nthreads:
-                time.sleep(0.2)
             job.start()
         for job in jobs:
             job.join()
     else:
-        # run straight through
-        for job in jobs:
-            job.start()
-            job.join()
+        # run straight through, one at a time
+        for test in tests:
+            test.run_test(verbose, cluster_queue)
 
 
 def compare_tests(tests, verbose):
@@ -398,7 +436,7 @@ copy_files_since: files produced since the timestamp (in seconds since the
             vcs[key] = testcode2.compatibility.compat_input(
                     'Enter revision id for %s: ' % (key))
 
-    # Benchmark label from vcs info. 
+    # Benchmark label from vcs info.
     if len(vcs) == 1:
         benchmark = vcs.popitem()[1]
     else:
@@ -462,7 +500,7 @@ verbose: if true additional output is produced; if false a minimal status is
         skipped_msg = ''
 
     if verbose:
-        msg = 'All done.  %s%s out of %s tests passed.' + skipped_msg 
+        msg = 'All done.  %s%s out of %s tests passed.' + skipped_msg
         if npassed == nran:
             print(msg % ('', npassed, nran))
         else:
@@ -496,7 +534,7 @@ args: command-line arguments passed to testcode2.
 
     start_status(tests, 'run' in actions, verbose)
     if 'run' in actions:
-        run_tests(tests, verbose, options.queue_system, options.nthreads)
+        run_tests(tests, verbose, options.queue_system, options.tot_nprocs)
         end_status(tests, 0, verbose)
     if 'compare' in actions:
         nskipped = compare_tests(tests, verbose)
