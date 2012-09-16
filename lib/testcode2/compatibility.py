@@ -21,6 +21,8 @@ in the main source code.
 :license: modified BSD; see LICENSE for more details.
 '''
 
+import sys
+
 ### python 2.4 ###
 
 # Import from the sets module if sets are not part of the language.
@@ -127,3 +129,8 @@ try:
     compat_input = raw_input
 except NameError:
     compat_input = input
+
+try:
+    maxint = sys.maxint
+except AttributeError:
+    maxint = sys.maxsize
