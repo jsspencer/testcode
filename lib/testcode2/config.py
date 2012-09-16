@@ -135,8 +135,9 @@ config_file: location of the userconfig file, either relative or absolute.'''
         if 'submit_template' in tp_dict:
             tp_dict['submit_template'] = os.path.join(config_directory,
                                                     tp_dict['submit_template'])
-        if 'nprocs' in test_dict:
-            test_dict['nprocs'] = int(test_dict['nprocs'])
+        for key in ('nprocs', 'max_nprocs', 'min_nprocs'):
+            if key in test_dict:
+                test_dict[key] = int(test_dict[key])
         if 'inputs_args' in test_dict:
             # format: (input, arg), (input, arg)'
             test_dict['inputs_args'] = compat.literal_eval(
@@ -208,6 +209,8 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                             default_tolerance=default_test.default_tolerance,
                             tolerances=default_test.tolerances,
                             nprocs=default_test.nprocs,
+                            min_nprocs=default_test.min_nprocs,
+                            max_nprocs=default_test.max_nprocs,
                         )
         # tolerances
         if jobconfig.has_option(section, 'tolerance'):
@@ -230,8 +233,8 @@ config_file: location of the jobconfig file, either relative or absolute.'''
         # Other options.
         for option in jobconfig.options(section):
             test_dict[option] = jobconfig.get(section, option)
-        if 'nprocs' in test_dict:
-            test_dict['nprocs'] = int(test_dict['nprocs'])
+        for key in ('nprocs', 'max_nprocs', 'min_nprocs'):
+            test_dict[key] = int(test_dict[key])
         # Expand any globs in the input files.
         if 'path' in test_dict:
             path = os.path.join(config_directory, test_dict['path'])

@@ -140,6 +140,8 @@ class Test:
         self.output = None
         self.nprocs = 0
         self.override_nprocs = False
+        self.min_nprocs = 0
+        self.max_nprocs = compat.maxint
 
         # Analysis
         self.default_tolerance = None
