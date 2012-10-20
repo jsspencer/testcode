@@ -71,10 +71,6 @@ Options
 --job-option=JOB_OPTION
     Override/add setting to :ref:`jobconfig`.  Takes three arguments.  Format:
     section_name option_name value.  Default: none.
--n NTHREADS, --nthreads=NTHREADS
-    Set the number of tests to run concurrently.  Only relevant to the run
-    action.  Default: number of test jobs to run if --submit is used;
-    1 otherwise.
 --older-than=OLDER_THAN
     Set the age (in days) of files to remove.  Only relevant to the tidy
     action.  Default: 14 days.
@@ -91,6 +87,10 @@ Options
     the benchmark files with the corresponding ID are used.  This allows two
     sets of benchmarks to be compared.  Default: unique filename based upon
     date if running tests and most recent test_id if comparing tests.
+--total-processors=TOT_NPROCS
+    Set the total number of processors to use to run as many tests as possible
+    at the same time.  Relevant only to the run option.  Default: run all tests
+    concurrently run if --submit is used; run tests sequentially otherwise.
 --userconfig=USERCONFIG
     Set path to the user configuration file.  Default: userconfig.
 --user-option=USER_OPTION
