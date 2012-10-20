@@ -166,6 +166,8 @@ class Test:
         self.start_job = DIR_LOCK.in_dir(self.path)(self._start_job)
         self.move_output_to_test_output = DIR_LOCK.in_dir(self.path)(
                                                self._move_output_to_test_output)
+        self.move_old_output_files = DIR_LOCK.in_dir(self.path)(
+                                               self._move_old_output_files)
         self.verify_job = DIR_LOCK.in_dir(self.path)(self._verify_job)
 
     def run_test(self, verbose=True, cluster_queue=None):
@@ -187,6 +189,9 @@ class Test:
                         self.test_program.test_id, test_input, test_arg))
                 bench_files.append(util.testcode_filename(FILESTEM['benchmark'],
                     self.test_program.test_id, test_input, test_arg))
+
+            # Move files matching output pattern out of the way.
+            self.move_old_output_files(verbose)
 
             # Run tests one-at-a-time locally or submit job in single submit
             # file to a queueing system.
@@ -281,6 +286,31 @@ enters self.path.
             err = ('Output pattern (%s) matches %s files (%s).'
                      % (self.output, len(out_files), out_files))
             raise exceptions.RunError(err)
+
+    def _move_old_output_files(self, verbose):
+        '''Move output to the testcode output file.  Requires directory lock.
+
+This is used when a program writes to standard output rather than to STDOUT.
+
+IMPORTANT: use self.move_oold_output_files rather than
+self._move_old_output_files if using multiple threads.
+
+Decorated to move_old_output_files, which acquires the directory lock and
+enters self.path.
+'''
+        if self.output:
+            old_out_files = glob.glob(self.output)
+            if old_out_files:
+                out_dir = 'test.prev.output.%s' % (self.test_program.test_id)
+                if verbose:
+                    print('WARNING: found existing files matching output '
+                          'pattern: %s.' % self.output)
+                    print('WARNING: moving existing output files (%s) to %s.\n'
+                          % (', '.join(old_out_files), out_dir))
+                if not os.path.exists(out_dir):
+                    os.mkdir(out_dir)
+                for out_file in old_out_files:
+                    shutil.move(out_file, out_dir)
 
     def _verify_job(self, input_file, args, verbose=True):
         '''Check job against benchmark.
