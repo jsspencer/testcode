@@ -137,6 +137,8 @@ for all tests of this type:
 
 * inputs_args (no default)
 * nprocs (default: 0)
+* min_nprocs (default: 0)
+* max_nprocs (default: 2^31-1 or 2^63-1)
 * output (no default)
  
 See :ref:`jobconfig` for more details.

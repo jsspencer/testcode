@@ -27,6 +27,12 @@ The following options are permitted:
 inputs_args [inputs and arguments format (see :ref:`below <inputs>`)]
     Input filename and associated arguments to be passed to the test program.
     No default.
+min_nprocs [integer]
+    Minimum number of processors to run test on.  Cannot be overridden by the
+    '--processors' command-line option.  Default: 0.
+max_nprocs [integer]
+    Maximum number of processors to run test on.  Cannot be overridden by the
+    '--processors' command-line option.  Default: 2^31-1 or 2^63-1.
 nprocs [integer]
     Number of processors to run the test on.  Zero indicates to run the test
     purely in serial, without using an external program such as mpirun to

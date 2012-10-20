@@ -95,6 +95,10 @@ tests: list of selected tests.
         for test in tests:
             if not test.override_nprocs:
                 test.nprocs = nprocs
+            if test.nprocs < test.min_nprocs:
+                test.nprocs = test.min_nprocs
+            if test.nprocs > test.max_nprocs:
+                test.nprocs = test.max_nprocs
 
     # parse selected job categories from command line
     # Remove those tests which weren't run most recently if comparing.
