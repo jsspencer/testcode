@@ -246,10 +246,19 @@ config_file: location of the jobconfig file, either relative or absolute.'''
         if 'inputs_args' in test_dict:
             inputs_args = []
             for input_arg in test_dict['inputs_args']:
-                inp = input_arg[0]
-                if len(input_arg) == 2:
+                # Be a little forgiving for the input_args config option.
+                # If we're given ('input'), then clearly the user meant for the
+                # args option to be empty.  However, literal_eval returns
+                # a string rather than a tuple in such cases, which causes
+                # problems.
+                if isinstance(input_arg, str):
+                    inp = input_arg
+                    arg = ''
+                elif len(input_arg) == 2:
+                    inp = input_arg[0]
                     arg = input_arg[1]
                 else:
+                    inp = input_arg[0]
                     arg = ''
                 if inp:
                     # the test, error and benchmark filenames contain the input
