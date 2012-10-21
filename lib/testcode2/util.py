@@ -21,8 +21,9 @@ def testcode_filename(stem, file_id, inp, args):
     if inp:
         filename = '%s.inp=%s' % (filename, inp)
     if args:
-        args_string = args.replace(' ','_')
-        filename = '%s.args=%s' % (filename, args_string)
+        filename = '%s.args=%s' % (filename, args)
+    filename = filename.replace(' ','_')
+    filename = filename.replace('/', '_')
     return filename
 
 def testcode_file_id(filename, stem):
