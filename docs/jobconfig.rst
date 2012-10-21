@@ -87,11 +87,12 @@ a comma-separated list enclosed in parantheses) contains two elements: the name
 of an input file and the associated arguments, in that order, represents
 a test.  Both elements must be quoted.  If the input filename contains
 wildcard, then those wildcards are expanded to find all files in the test
-subdirectory which match that pattern.  A separate test (with the same
-arguments string) is then created for each file matching the pattern.
-used to construct the command to run A null string (``''``) should be used to
-represent the absence of an input file or arguments.  Tests within the same
-subdirectory are run in the order they are specified.  For example::
+subdirectory which match that pattern; the expanded list is sorted in
+alphanumerical order.  A separate test (with the same arguments string) is then
+created for each file matching the pattern.  used to construct the command to
+run.  A null string (``''``) should be used to represent the absence of an
+input file or arguments.  Tests within the same subdirectory are run in the
+order they are specified.  For example::
 
     inputs_args = ('test.inp', '')
 
