@@ -44,8 +44,8 @@ The following options are allowed to specify a program (called 'program_name')
 to be tested:
 
 data_tag [string]
-    Data tag to be used to extract data from test and benchmark output.  No
-    default.
+    Data tag to be used to extract data from test and benchmark output.  See
+    :ref:`verification` for more details.  No default.
 ignore_fields [space-separated list of strings]
     Specify the fields (e.g. column headings in the output from the extraction
     program) to ignore.  This can be used to include, say, timing information
@@ -75,7 +75,10 @@ extract_cmd_template [string]
     tc.extract tc.args tc.test tc.bench if verify is True.
 extract_program [string]
     Path to program to use to extract data from test and benchmark output.
-    No default.
+    See :ref:`verification` for more details.  No default.
+extract_fmt [string]
+    Format of the data returned by extraction program. See :ref:`verification`
+    for more details.  Can only take values table or yaml.  Default: table.
 launch_parallel [string]
     Command template used to run the test program in parallel.  tc.nprocs is
     replaced with the number of processors a test uses (see run_cmd_template).
