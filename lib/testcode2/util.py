@@ -30,8 +30,8 @@ def testcode_file_id(filename, stem):
     '''Extract the file_id from a filename in the testcode format.'''
     filename = os.path.basename(filename)
     file_id = filename.replace('%s.' % (stem), '')
-    file_id = re.sub('\.inp=.*', '', file_id)
-    file_id = re.sub('\.args=.*', '', file_id)
+    file_id = re.sub(r'\.inp=.*', '', file_id)
+    file_id = re.sub(r'\.args=.*', '', file_id)
     return file_id
 
 
