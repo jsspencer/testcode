@@ -15,6 +15,12 @@ import shutil
 import subprocess
 import sys
 
+try:
+    import yaml
+    _HAVE_YAML = True
+except ImportError:
+    _HAVE_YAML = False
+
 import testcode2.dir_lock as dir_lock
 import testcode2.exceptions as exceptions
 import testcode2.queues  as queues
@@ -63,6 +69,7 @@ class TestProgram:
         self.extract_cmd_template = 'tc.extract tc.args tc.file'
         self.extract_program = None
         self.extract_args = ''
+        self.extract_fmt = 'table'
         self.verify = False
 
         # Info
@@ -76,6 +83,11 @@ class TestProgram:
         # extract command template.
         if self.verify and 'extract_cmd_template' not in kwargs:
             self.extract_cmd_template = 'tc.extract tc.args tc.test tc.bench'
+
+        # Can we actually extract the data?
+        if self.extract_fmt == 'yaml' and not _HAVE_YAML:
+            err = 'YAML data format cannot be used: PyYAML is not installed.'
+            raise exceptions.TestCodeError(err)
 
     def run_cmd(self, input_file, args, nprocs=0):
         '''Create run command.'''
@@ -416,8 +428,18 @@ Assume function is executed in self.path.'''
                     err = extract_popen.communicate()[1].decode('utf-8')
                     err = 'Analysing output failed: %s' % (err)
                     raise exceptions.RunError(err)
-                table_string = extract_popen.communicate()[0].decode('utf-8')
-                outputs.append(util.dict_table_string(table_string))
+                data_string = extract_popen.communicate()[0].decode('utf-8')
+                if self.test_program.extract_fmt == 'table':
+                    outputs.append(util.dict_table_string(data_string))
+                elif self.test_program.extract_fmt == 'yaml':
+                    outputs.append(yaml.safe_load(data_string))
+                    # convert values to be in a tuple so the format matches
+                    # that from dict_table_string.
+                    for (key, val) in outputs[-1].items():
+                        if isinstance(val, list):
+                            outputs[-1][key] = tuple(val)
+                        else:
+                            outputs[-1][key] = tuple((val,))
 
         return tuple(outputs)
 

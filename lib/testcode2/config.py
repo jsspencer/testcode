@@ -90,7 +90,7 @@ config_file: location of the userconfig file, either relative or absolute.'''
 
     test_program_options = ('run_cmd_template', 'submit_template',
         'launch_parallel', 'ignore_fields', 'data_tag', 'extract_cmd_template',
-        'extract_program', 'extract_args', 'verify', 'vcs')
+        'extract_program', 'extract_args', 'extract_fmt', 'verify', 'vcs')
     default_test_options = ('inputs_args', 'output', 'nprocs')
     test_programs = {}
     for section in userconfig.sections():
