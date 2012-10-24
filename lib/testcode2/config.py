@@ -263,7 +263,11 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                 if inp:
                     # the test, error and benchmark filenames contain the input
                     # filename, so we need to filter them out.
-                    for inp_file in sorted(glob.glob(inp)):
+                    inp_files = sorted(glob.glob(inp))
+                    if not inp_files:
+                        err = 'Cannot find input file %s in %s.' % (inp, path)
+                        raise exceptions.TestCodeError(err)
+                    for inp_file in inp_files:
                         # We use a glob for the input argument to avoid the
                         # case where the argument is empty and hence a pattern
                         # such as *.inp also matches files like
