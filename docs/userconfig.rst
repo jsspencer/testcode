@@ -26,8 +26,8 @@ benchmark [string]
     The 'inp' and/or 'arg' section is not included if it is empty.
 date_fmt [string]
     Format of the date string used to uniquely label test outputs.  This must
-    be a valid date format string (see :ref:`Python documenation
-    <http://docs.python.org/library/time.html>`).  Default: %d%m%Y.
+    be a valid date format string (see `Python documenation
+    <http://docs.python.org/library/time.html>`_).  Default: %d%m%Y.
 default_program [string]
     Default program used to run each test.  Only needs to be set if
     multiple program sections are specified.  No default.
