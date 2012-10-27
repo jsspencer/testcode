@@ -432,14 +432,16 @@ Assume function is executed in self.path.'''
                 if self.test_program.extract_fmt == 'table':
                     outputs.append(util.dict_table_string(data_string))
                 elif self.test_program.extract_fmt == 'yaml':
-                    outputs.append(yaml.safe_load(data_string))
+                    outputs.append({})
                     # convert values to be in a tuple so the format matches
                     # that from dict_table_string.
-                    for (key, val) in outputs[-1].items():
+                    # ensure all keys are strings so they can be sorted
+                    # (different data types cause problems!)
+                    for (key, val) in yaml.safe_load(data_string).items():
                         if isinstance(val, list):
-                            outputs[-1][key] = tuple(val)
+                            outputs[-1][str(key)] = tuple(val)
                         else:
-                            outputs[-1][key] = tuple((val,))
+                            outputs[-1][str(key)] = tuple((val,))
 
         return tuple(outputs)
 
