@@ -141,7 +141,9 @@ class TestProgram:
 
 class Test:
     '''Store and execute a test.'''
-    def __init__(self, test_program, path, **kwargs):
+    def __init__(self, name, test_program, path, **kwargs):
+
+        self.name = name
 
         # program
         self.test_program = test_program

@@ -143,7 +143,7 @@ config_file: location of the userconfig file, either relative or absolute.'''
             test_dict['inputs_args'] = compat.literal_eval(
                                                '%s,' % test_dict['inputs_args'])
         # Create a default test.
-        tp_dict['default_test_settings'] = testcode2.Test(None, None,
+        tp_dict['default_test_settings'] = testcode2.Test(None, None, None,
                 **test_dict)
         if 'vcs' in tp_dict:
             tp_dict['vcs'] = vcs.VCSRepository(tp_dict['vcs'],
@@ -288,7 +288,7 @@ config_file: location of the jobconfig file, either relative or absolute.'''
             test_dict['inputs_args'] = tuple(inputs_args)
         os.chdir(old_dir)
         # Create test.
-        tests.append(testcode2.Test(test_program, path, **test_dict))
+        tests.append(testcode2.Test(section, test_program, path, **test_dict))
 
     return (tests, test_categories)
 
