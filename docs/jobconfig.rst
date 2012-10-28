@@ -45,9 +45,13 @@ output [string]
     only matches a single file at the end of the calculation.  Default:
     inherits from setting in :ref:`userconfig`.
 override_nprocs [boolean]
-    True if the number of processors to run the test cannot be overidden by
-    command-line options to :ref:`testcode.py`.  Useful to force certain tests
-    to be executed on a given number of processors.  Default: false.
+    If true then the number of processors to run the test cannot be overidden
+    by command-line options to :ref:`testcode.py`.  Useful to force certain
+    tests to be executed on a given number of processors.  Default: false.
+run_concurrent [boolean]
+    If true then subtests defined by the inputs_args option are allowed to run
+    concurrently rather than consecutively, assuming enough processors are
+    available.  Default: false.
 test_program [string]
     Program name (appropriate section heading in :ref:`userconfig`) to use to
     run the test.  Default: specified in the [user] section of
@@ -89,28 +93,28 @@ The inputs and arguments must be given in a specific format.  As with the
 using a comma-separated list of python tuples.  Each tuple (basically
 a comma-separated list enclosed in parantheses) contains two elements: the name
 of an input file and the associated arguments, in that order, represents
-a test.  Both elements must be quoted.  If the input filename contains
-wildcard, then those wildcards are expanded to find all files in the test
-subdirectory which match that pattern; the expanded list is sorted in
-alphanumerical order.  A separate test (with the same arguments string) is then
-created for each file matching the pattern.  used to construct the command to
-run.  A null string (``''``) should be used to represent the absence of an
-input file or arguments.  Tests within the same subdirectory are run in the
-order they are specified.  For example::
+a subtest belonging to the given test.  Both elements must be quoted.  If the
+input filename contains wildcard, then those wildcards are expanded to find all
+files in the test subdirectory which match that pattern; the expanded list is
+sorted in alphanumerical order.  A separate subtest (with the same arguments
+string) is then created for each file matching the pattern.  used to construct
+the command to run.  A null string (``''``) should be used to represent the
+absence of an input file or arguments.  By default subtests run in the order
+they are specified.  For example::
 
     inputs_args = ('test.inp', '')
 
-defines a single test, with input filename ``test.inp`` and no arguments,
+defines a single subtest, with input filename ``test.inp`` and no arguments,
 
 ::
 
     inputs_args = ('test.inp', ''), ('test2.inp', '--verbose')
 
-defines two tests, with an additional argument for the second test, and
+defines two subtests, with an additional argument for the second subtest, and
 
 ::
 
     inputs_args = ('test*.inp', '')
 
-defines a test for each file matching the pattern ``test*inp`` in the test
-subdirectory.
+defines a subtest for each file matching the pattern ``test*inp`` in the
+subdirectory of the test.

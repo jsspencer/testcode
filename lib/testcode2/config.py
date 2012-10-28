@@ -127,6 +127,9 @@ config_file: location of the userconfig file, either relative or absolute.'''
         for item in default_test_options:
             if userconfig.has_option(section, item):
                 test_dict[item] = userconfig.get(section, item)
+        if userconfig.has_option(section, 'run_concurrent'):
+            test_dict['run_concurrent'] = \
+                    userconfig.getboolean(section, 'run_concurrent')
         # Programs can be specified relative to the config directory.
         exe = set_program_name(exe, config_directory)
         if 'extract_program' in tp_dict:
@@ -211,6 +214,7 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                             nprocs=default_test.nprocs,
                             min_nprocs=default_test.min_nprocs,
                             max_nprocs=default_test.max_nprocs,
+                            run_concurrent=default_test.run_concurrent,
                         )
         # tolerances
         if jobconfig.has_option(section, 'tolerance'):
@@ -230,6 +234,10 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                                    '%s,' % jobconfig.get(section, 'inputs_args')
                                                           )
             jobconfig.remove_option(section, 'inputs_args')
+        if jobconfig.has_option(section, 'run_concurrent'):
+            test_dict['run_concurrent'] = \
+                    jobconfig.getboolean(section, 'run_concurrent')
+            jobconfig.remove_option(section, 'run_concurrent')
         # Other options.
         for option in jobconfig.options(section):
             test_dict[option] = jobconfig.get(section, option)
@@ -288,7 +296,14 @@ config_file: location of the jobconfig file, either relative or absolute.'''
             test_dict['inputs_args'] = tuple(inputs_args)
         os.chdir(old_dir)
         # Create test.
-        tests.append(testcode2.Test(section, test_program, path, **test_dict))
+        if test_dict['run_concurrent']:
+            for input_arg in test_dict['inputs_args']:
+                test_dict['inputs_args'] = (input_arg,)
+                tests.append(testcode2.Test(section, test_program, path,
+                                            **test_dict))
+        else:
+            tests.append(testcode2.Test(section, test_program, path,
+                                        **test_dict))
 
     return (tests, test_categories)
 
