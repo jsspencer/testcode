@@ -346,22 +346,25 @@ def select_tests(all_tests, test_categories, selected_categories, prefix=''):
                 # contained within the directory named cat.
                 tmp.append(cat)
         selected_categories = tmp
-    # prepend supplied prefix path to test name, where prefix is
-    # prepended to all the test.path attributes.
-    selected_categories = [os.path.normpath(os.path.join(prefix, cat))
-            for cat in selected_categories]
-    # Only want to run each test once.
-    selected_categories = compat.compat_set(selected_categories)
-    tests = [test for test in all_tests
-            if os.path.normpath(test.path) in selected_categories]
-    # Check...
-    test_paths = [os.path.normpath(test.path) for test in tests]
+    # Select tests to run.
+    tests = []
     for cat in selected_categories:
-        if cat not in test_paths:
-            # Remove prefix from path to match the original path.
-            # normpath does not end in a /, so remove that as well.
-            cat = cat[len(os.path.normpath(prefix))+1:]
+        # test paths are relative to the config directory but absolute paths
+        # are stored .
+        found = False
+        cat_path = os.path.join(prefix, cat)
+        for test in all_tests:
+            if cat == test.name:
+                found = True
+                tests.append(test)
+            elif (os.path.exists(cat_path) and
+                    os.path.samefile(cat_path, test.path)):
+                found = True
+                tests.append(test)
+        if not found:
             print('WARNING: %s test/category not found.\n' % cat)
+    # Only want to run each test once.
+    tests = list(compat.compat_set(tests))
     return tests
 
 def set_program_name(program, relative_path):

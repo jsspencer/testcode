@@ -59,7 +59,11 @@ tolerance [tolerance format (see :ref:`tolerance`)]
 Test categories
 ---------------
 
-Each test is automatically defined to reside in a category of the same name.
+For the purposes of selecting a subset of the tests in :ref:`testcode.py`, each
+test is automatically placed in two separate categories, one labelled by the
+test's name and the other by the test's path.  A test can hence be referred to
+by either its path or by its name (which are identical by default).  
+
 Additional categories can be specified in the [categories] section.  This makes
 it very easy to select subsets of the tests to run.  For example::
 
