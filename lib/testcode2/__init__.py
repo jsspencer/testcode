@@ -156,6 +156,11 @@ class Test:
         self.override_nprocs = False
         self.min_nprocs = 0
         self.max_nprocs = compat.maxint
+        # Run jobs in this concurrently rather than consecutively?
+        # Only used when setting tests up in testcode2.config: if true then
+        # each pair of input file and arguments are assigned to a different
+        # Test object rather than a single Test object.
+        self.run_concurrent = False
 
         # Analysis
         self.default_tolerance = None
