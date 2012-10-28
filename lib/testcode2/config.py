@@ -243,17 +243,26 @@ config_file: location of the jobconfig file, either relative or absolute.'''
             test_dict[option] = jobconfig.get(section, option)
         for key in ('nprocs', 'max_nprocs', 'min_nprocs'):
             test_dict[key] = int(test_dict[key])
-        # Expand any globs in the input files.
+        # Expand any globs in the path/section name and create individual Test
+        # objects for each one.
         if 'path' in test_dict:
             path = os.path.join(config_directory, test_dict['path'])
+            globbed_tests = [(section, test_path)
+                                            for test_path in glob.glob(path)]
             test_dict.pop('path')
         else:
             path = os.path.join(config_directory, section)
-        old_dir = os.getcwd()
-        os.chdir(path)
-        if 'inputs_args' in test_dict:
+            globbed_tests = [(test_path, test_path)
+                                            for test_path in glob.glob(path)]
+        # need to save test_dict['inputs_args'] in case it's a wildcard, there
+        # are multiple globbed_tests and the match in each path is different...
+        inputs_args_opt = test_dict['inputs_args']
+        for (name, path) in globbed_tests:
+            old_dir = os.getcwd()
+            os.chdir(path)
+            # Expand any globs in the input files.
             inputs_args = []
-            for input_arg in test_dict['inputs_args']:
+            for input_arg in inputs_args_opt:
                 # Be a little forgiving for the input_args config option.
                 # If we're given ('input'), then clearly the user meant for the
                 # args option to be empty.  However, literal_eval returns
@@ -294,16 +303,16 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                 else:
                     inputs_args.append((inp, arg))
             test_dict['inputs_args'] = tuple(inputs_args)
-        os.chdir(old_dir)
-        # Create test.
-        if test_dict['run_concurrent']:
-            for input_arg in test_dict['inputs_args']:
-                test_dict['inputs_args'] = (input_arg,)
-                tests.append(testcode2.Test(section, test_program, path,
+            os.chdir(old_dir)
+            # Create test.
+            if test_dict['run_concurrent']:
+                for input_arg in test_dict['inputs_args']:
+                    test_dict['inputs_args'] = (input_arg,)
+                    tests.append(testcode2.Test(name, test_program, path,
+                                                **test_dict))
+            else:
+                tests.append(testcode2.Test(name, test_program, path,
                                             **test_dict))
-        else:
-            tests.append(testcode2.Test(section, test_program, path,
-                                        **test_dict))
 
     return (tests, test_categories)
 

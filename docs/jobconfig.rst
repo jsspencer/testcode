@@ -48,6 +48,15 @@ override_nprocs [boolean]
     If true then the number of processors to run the test cannot be overidden
     by command-line options to :ref:`testcode.py`.  Useful to force certain
     tests to be executed on a given number of processors.  Default: false.
+path [string]
+    Set path (relative to the directory containing the ``jobconfig``
+    configuration file) of the test.  The test is run in this directory and so
+    input filenames need to be relative to it.  If the given path contains
+    wildcards, then this is expanded and an individual test is created for each
+    path that maches the pattern.  Note that Python's configparser restricts
+    the use of special characters in section names and hence some patterns can
+    only be accomplished by explicitly using the path option.  Default: test
+    name (i.e.  the name of the section defining the test).
 run_concurrent [boolean]
     If true then subtests defined by the inputs_args option are allowed to run
     concurrently rather than consecutively, assuming enough processors are
