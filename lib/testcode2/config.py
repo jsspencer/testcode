@@ -210,7 +210,7 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                             inputs_args=default_test.inputs_args,
                             output=default_test.output,
                             default_tolerance=default_test.default_tolerance,
-                            tolerances=default_test.tolerances,
+                            tolerances = copy.deepcopy(default_test.tolerances),
                             nprocs=default_test.nprocs,
                             min_nprocs=default_test.min_nprocs,
                             max_nprocs=default_test.max_nprocs,
