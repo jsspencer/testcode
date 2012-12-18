@@ -221,7 +221,7 @@ actions: list of testcode2 actions to run.
     if options.benchmark and options.benchmark[:2] == 't:':
         filestem['benchmark'] = testcode2.FILESTEM['test']
         options.benchmark = options.benchmark[2:]
-    if options.test_id and options.test_id == 'b:':
+    if options.test_id and options.test_id[:2] == 'b:':
         filestem['test'] = testcode2.FILESTEM['benchmark']
         options.test_id = options.test_id[2:]
     if filestem['test'] != testcode2.FILESTEM['test'] and 'run' in args:
