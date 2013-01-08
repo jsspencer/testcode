@@ -536,7 +536,8 @@ args: command-line arguments passed to testcode2.
             options.benchmark, options.user_option,
             options.job_option)
 
-    start_status(tests, 'run' in actions, verbose)
+    if not (len(actions) == 1 and 'tidy' in actions):
+        start_status(tests, 'run' in actions, verbose)
     if 'run' in actions:
         run_tests(tests, verbose, options.queue_system, options.tot_nprocs)
         end_status(tests, 0, verbose)
