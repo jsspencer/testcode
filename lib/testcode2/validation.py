@@ -76,7 +76,7 @@ def compare_data(benchmark, test, default_tolerance, tolerances,
                 tol = default_tolerance
             for ind in range(len(benchmark[key])):
                 (key_passed, err) = tol.validate(
-                        benchmark[key][ind], test[key][ind], key)
+                        test[key][ind], benchmark[key][ind], key)
                 if not key_passed:
                     status += 1
                 if not key_passed and err:
