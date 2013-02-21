@@ -35,8 +35,13 @@ Given floats are regarded as equal if they are within these tolerances.'''
                     if not passed:
                         msg = ('absolute error %.2e greater than %.2e.' %
                                 (err, self.absolute))
-                if passed and self.relative:
-                    err = abs(diff/benchmark_val)
+                if self.relative:
+                    if benchmark_val == 0 and diff == 0:
+                        err = 0
+                    elif benchmark_val == 0:
+                        err = float("Inf")
+                    else:
+                        err = abs(diff/benchmark_val)
                     passed = err < self.relative
                     if not passed:
                         msg = ('relative error %.2e greater than %.2e.' %
