@@ -512,6 +512,8 @@ verbose: if true additional output is produced; if false a minimal status is
     else:
         print(' [%s/%s]%s'% (npassed, nran, skipped_msg))
 
+    return 0 if nran == npassed else 1
+
 #--- main runner ---
 
 def main(args):
@@ -536,14 +538,15 @@ args: command-line arguments passed to testcode2.
             options.benchmark, options.user_option,
             options.job_option)
 
+    ret_val = 0
     if not (len(actions) == 1 and 'tidy' in actions):
         start_status(tests, 'run' in actions, verbose)
     if 'run' in actions:
         run_tests(tests, verbose, options.queue_system, options.tot_nprocs)
-        end_status(tests, 0, verbose)
+        ret_val = end_status(tests, 0, verbose)
     if 'compare' in actions:
         nskipped = compare_tests(tests, verbose)
-        end_status(tests, nskipped, verbose)
+        ret_val = end_status(tests, nskipped, verbose)
     if 'diff' in actions:
         diff_tests(tests, user_options['diff'], verbose)
     if 'tidy' in actions:
@@ -555,6 +558,8 @@ args: command-line arguments passed to testcode2.
     if 'make-benchmarks' in actions:
         make_benchmarks(test_programs, tests, userconfig, start_time)
 
+    return ret_val
+
 if __name__ == '__main__':
 
-    main(sys.argv[1:])
+    sys.exit(main(sys.argv[1:]))

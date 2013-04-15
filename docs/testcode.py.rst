@@ -97,6 +97,11 @@ Options
     Override/add setting to :ref:`userconfig`.  Takes three arguments.  Format:
     section_name option_name value.  Default: none.
 
+Exit status
+-----------
+
+1 if one or more tests fail (run and compare actions only) and 0 otherwise.
+
 License
 -------
 
@@ -104,6 +109,6 @@ Modified BSD License.  See LICENSE in the source code for more details.
 
 Bugs
 ----
-                                                                                                                               
+
 Contact James Spencer (j.spencer@imperial.ac.uk) regarding bug reports,
 suggestions for improvements or code contributions.
