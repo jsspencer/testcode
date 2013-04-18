@@ -105,7 +105,7 @@ run_cmd_template [string]
 
     Default: 'tc.program tc.args tc.input > tc.output 2> tc.error' in serial
     and 'launch_command tc.program tc.args tc.input > tc.output 2> tc.error' in
-    parallel, where launch_command is specified above The parallel version is
+    parallel, where launch_command is specified above.  The parallel version is
     only used if the number of processors to run a test on is greater than
     zero.
 submit_pattern [string]
