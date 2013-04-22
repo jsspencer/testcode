@@ -160,10 +160,12 @@ The format for the tolerance for the data is very specific.  Individual
 tolerance elements are specified in a comma-separated list.  Each individual
 tolerance element is a python tuple (essentially a comma-separated list
 enclosed in parentheses) consisting of, in order, the absolute tolerance, the
-relative tolerance and the label of the field to which the tolerances apply.
-The labels must be quoted.  If no label is supplied then the setting is taken
-to be the default tolerance to be applied to all data.  For example, the
-setting::
+relative tolerance, the label of the field to which the tolerances apply and
+a boolean value specifying the strictness of the tolerance (see below).  The
+labels must be quoted.  If no label is supplied (or is set to None) then the
+setting is taken to be the default tolerance to be applied to all data.  If the
+strictness value is not given, the tolerance is assumed to be strict.  For
+example, the setting::
 
     (1e-8, 1.e-6), (1.e-4, 1.e-4, 'Force')
 
@@ -171,5 +173,19 @@ uses an absolute tolerance of 10^-8 and a relative tolerance of 10^-6 by
 default and an absolte tolerance and a relative tolerance of 10^-4 for data
 items labelled with 'Force' (i.e. in columns headed by 'Force' using an
 external data extraction program or labelled 'Force' by the internal data
-extraction program using data tags).
+extraction program using data tags).  If a tolerance is set to None, then it is
+ignored.  At least one of the tolerances must be set.
 
+A strict tolerance requires both the test value to be within the absolute and
+relative tolerance of the benchmark value in order to be considered to pass.
+This is the default behaviour.  A non-strict tolerance only requires the test
+value to be within the absolute or relative tolerance of the benchmark value.
+For example::
+
+    (1e-8, 1e-6, None, False), (1e-10, 1e-10, 'Energy')
+
+sets the default absolute and relative tolerances to be 10^-8 and 10^-6
+respectively and sets the default tolerance to be non-strict except for the
+'Energy' values, which have a strict absolute and relative tolerances of
+10^-10.  If only one of the tolerances is set, then the strict and non-strict
+settings are equivalent.

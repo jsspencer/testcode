@@ -22,8 +22,12 @@ import testcode2.validation as validation
 import testcode2.vcs as vcs
 
 def parse_tolerance_tuple(val):
-    '''Parse (abs_tol,rel_tol,name).'''
-    if len(val) == 3:
+    '''Parse (abs_tol,rel_tol,name,strict).'''
+    if len(val) >= 4:
+        strict = val[3]
+    else:
+        strict = True
+    if len(val) >= 3:
         name = val[2]
     else:
         name = None
@@ -35,7 +39,7 @@ def parse_tolerance_tuple(val):
         abs_tol = val[0]
     else:
         abs_tol = None
-    return (name, validation.Tolerance(abs_tol, rel_tol))
+    return (name, validation.Tolerance(abs_tol, rel_tol, strict))
 
 def parse_userconfig(config_file, executables=None, test_id=None,
         settings=None):

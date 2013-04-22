@@ -8,8 +8,10 @@ Classes and functions for comparing data.
 :license: modified BSD; see LICENSE for more details.
 '''
 
-import testcode2.compatibility as compat
 import sys
+
+import testcode2.compatibility as compat
+import testcode2.exceptions as exceptions
 
 class Status:
     '''Enum-esque object for storing whether an object passed a comparison.
@@ -74,14 +76,23 @@ Return the maximum level (ie most "failed") status.'''
 class Tolerance:
     '''Store absolute and relative tolerances
 
-Given floats are regarded as equal if they are within these tolerances.'''
-    def __init__(self, absolute=None, relative=None):
+Given are regarded as equal if they are within these tolerances.
+
+absolute: threshold for absolute difference between two numbers.
+relative: threshold for relative difference between two numbers.
+strict: if true, then require numbers to be within both thresholds.
+'''
+    def __init__(self, absolute=None, relative=None, strict=True):
         self.absolute = absolute
         self.relative = relative
+        if not self.absolute and not self.relative:
+            err = 'Neither absolute nor relative tolerance given.'
+            raise exceptions.TestCodeError(err)
+        self.strict = strict
     def validate(self, test_val, benchmark_val, key=''):
         '''Compare test and benchmark values to within the tolerances.'''
         status = Status([True])
-        msg = 'values are within tolerance.'
+        msg = ['values are within tolerance.']
         try:
             # Check float is not NaN (which we can't compare).
             if compat.isnan(test_val) or compat.isnan(benchmark_val):
@@ -89,35 +100,77 @@ Given floats are regarded as equal if they are within these tolerances.'''
                 msg = 'cannot compare NaNs.'
             else:
                 # Check if values are within tolerances.
-                diff = test_val - benchmark_val
-                if self.absolute:
-                    err = abs(diff)
-                    abs_passed = err < self.absolute
-                    if not abs_passed:
-                        msg = ('absolute error %.2e greater than %.2e.' %
-                                (err, self.absolute))
-                    status += Status([abs_passed])
-                if self.relative:
-                    if benchmark_val == 0 and diff == 0:
-                        err = 0
-                    elif benchmark_val == 0:
-                        err = float("Inf")
-                    else:
-                        err = abs(diff/benchmark_val)
-                    rel_passed = err < self.relative
-                    if not rel_passed:
-                        msg = ('relative error %.2e greater than %.2e.' %
-                                (err, self.relative))
-                    status += Status([rel_passed])
+                (status_absolute, msg_absolute) = \
+                        self.validate_absolute(benchmark_val, test_val)
+                (status_relative, msg_relative) = \
+                        self.validate_relative(benchmark_val, test_val)
+                if self.absolute and self.relative and not self.strict:
+                    # Require only one of thresholds to be met.
+                    status = Status([status_relative.passed(),
+                                     status_absolute.passed()])
+                else:
+                    # Only have one or other of thresholds (require active one
+                    # to be met) or have both and strict mode is on (require
+                    # both to be met).
+                    status = status_relative + status_absolute
+                err_stat = ''
+                if status.warning():
+                    err_stat = 'Warning: '
+                elif status.failed():
+                    err_stat = 'ERROR: '
+                msg = []
+                if self.absolute and msg_absolute:
+                    msg.append('%s%s' % (err_stat, msg_absolute))
+                if self.relative and msg_relative:
+                    msg.append('%s%s' % (err_stat, msg_relative))
         except TypeError:
             if test_val != benchmark_val:
                 # require test and benchmark values to be equal (within python's
                 # definition of equality).
                 status = Status([False])
-                msg = 'values are different.'
-        if key:
-            msg = '%s: %s' % (key, msg)
+                msg = ['values are different.']
+        if key and msg:
+            msg.insert(0, key)
+            msg = '\n    '.join(msg)
+        else:
+            msg = '\n'.join(msg)
         return (status, msg)
+
+    def validate_absolute(self, benchmark_val, test_val):
+        '''Compare test and benchmark values to the absolute tolerance.'''
+        if self.absolute:
+            diff = test_val - benchmark_val
+            err = abs(diff)
+            passed = err < self.absolute
+            msg = ''
+            if not passed:
+                msg = ('absolute error %.2e greater than %.2e.' %
+                    (err, self.absolute))
+        else:
+            passed = True
+            msg = 'No absolute tolerance set.  Passing without checking.'
+        return (Status([passed]), msg)
+
+    def validate_relative(self, benchmark_val, test_val):
+        '''Compare test and benchmark values to the relative tolerance.'''
+        if self.relative:
+            diff = test_val - benchmark_val
+            if benchmark_val == 0 and diff == 0:
+                err = 0
+            elif benchmark_val == 0:
+                err = float("Inf")
+            else:
+                err = abs(diff/benchmark_val)
+            passed = err < self.relative
+            msg = ''
+            if not passed:
+                msg = ('relative error %.2e greater than %.2e.' %
+                        (err, self.relative))
+        else:
+            passed = True
+            msg = 'No relative tolerance set.  Passing without checking.'
+        return (Status([passed]), msg)
+
 
 def compare_data(benchmark, test, default_tolerance, tolerances,
         ignore_fields=None):
