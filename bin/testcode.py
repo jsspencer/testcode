@@ -420,7 +420,8 @@ copy_files_since: files produced since the timestamp (in seconds since the
     # All tests passed?
     statuses = [test.get_status() for test in tests]
     npassed = sum(status[0] for status in statuses)
-    nran = sum(status[1] for status in statuses)
+    nwarning = sum(status[1] for status in statuses)
+    nran = sum(status[2] for status in statuses)
     if npassed != nran:
         ans = ''
         print('Not all tests passed.')
@@ -496,21 +497,29 @@ verbose: if true additional output is produced; if false a minimal status is
 
     statuses = [test.get_status() for test in tests]
     npassed = sum(status[0] for status in statuses)
-    nran = sum(status[1] for status in statuses)
+    nwarning = sum(status[1] for status in statuses)
+    nran = sum(status[2] for status in statuses)
+    # Treat warnings as passes but add a note about how many warnings.
+    npassed += nwarning
 
     if skipped != 0:
         skipped_msg = '  (Skipped: %s.)'  % (skipped)
     else:
         skipped_msg = ''
 
-    if verbose:
-        msg = 'All done.  %s%s out of %s tests passed.' + skipped_msg
-        if npassed == nran:
-            print(msg % ('', npassed, nran))
-        else:
-            print(msg % ('WARNING: only ', npassed, nran))
+    if nwarning != 0:
+        warning_msg = ' (%s warnings)' % (nwarning)
     else:
-        print(' [%s/%s]%s'% (npassed, nran, skipped_msg))
+        warning_msg = ''
+
+    if verbose:
+        msg = 'All done.  %s%s out of %s tests passed%s.%s'
+        if npassed == nran:
+            print(msg % ('', npassed, nran, warning_msg, skipped_msg))
+        else:
+            print(msg % ('ERROR: only ', npassed, nran, warning_msg, skipped_msg))
+    else:
+        print(' [%s/%s%s]%s'% (npassed, nran, warning_msg, skipped_msg))
 
     # ternary operator not in python 2.4. :-(
     ret_val = 0

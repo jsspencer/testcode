@@ -173,8 +173,7 @@ class Test:
         if not self.inputs_args:
             self.inputs_args = [('', '')]
 
-        self.status = dict( (inp_arg, [False, False])
-                                            for inp_arg in self.inputs_args )
+        self.status = dict( (inp_arg, None) for inp_arg in self.inputs_args )
 
         # 'Decorate' functions which require a directory lock in order for file
         # access to be thread-safe.
@@ -243,8 +242,9 @@ class Test:
         except exceptions.RunError:
             err = sys.exc_info()[1]
             err = 'Test(s) in %s failed.\n%s' % (self.path, err)
-            self._update_status(False, (test_input, test_arg))
-            util.print_success(False, err, verbose)
+            status = validation.Status([False])
+            self._update_status(status, (test_input, test_arg))
+            status.print_status(err, verbose)
 
     def _start_job(self, cmd, cluster_queue=None, verbose=True):
         '''Start test running.  Requires directory lock.
@@ -342,21 +342,20 @@ threads.
 Decorated to verify_job, which acquires directory lock and enters self.path
 first, during initialisation.'''
         if self.test_program.verify:
-            (passed, msg) = self.verify_job_external(input_file, args, verbose)
+            (status, msg) = self.verify_job_external(input_file, args, verbose)
         else:
             (bench_out, test_out) = self.extract_data(input_file, args, verbose)
-            (status, msg) = validation.compare_data(bench_out, test_out,
-                    self.default_tolerance, self.tolerances)
-            if status < 0:
-                # Print dictionaries separately.
-                data_table = '\n'.join((
-                            util.pretty_print_table(['benchmark'], [bench_out]),
-                            util.pretty_print_table(['test     '], [test_out])))
-            else:
+            (comparable, status, msg) = validation.compare_data(bench_out,
+                    test_out, self.default_tolerance, self.tolerances)
+            if comparable:
                 # Combine test and benchmark dictionaries.
                 data_table = util.pretty_print_table( ['benchmark', 'test'],
                                                       [bench_out, test_out])
-            passed = status == 0
+            else:
+                # Print dictionaries separately--couldn't even compare them!
+                data_table = '\n'.join((
+                            util.pretty_print_table(['benchmark'], [bench_out]),
+                            util.pretty_print_table(['test     '], [test_out])))
             if msg.strip():
                 # join data table with error message from
                 # validation.compare_data.
@@ -364,10 +363,10 @@ first, during initialisation.'''
             else:
                 msg = data_table
 
-        self._update_status(passed, (input_file, args))
-        util.print_success(passed, msg, verbose)
+        self._update_status(status, (input_file, args))
+        status.print_status(msg, verbose)
 
-        return (passed, msg)
+        return (status, msg)
 
     def verify_job_external(self, input_file, args, verbose=True):
         '''Run user-supplied verifier script.
@@ -388,9 +387,9 @@ Assume function is executed in self.path.'''
             raise exceptions.RunError(err)
         output = verify_popen.communicate()[0].decode('utf-8')
         if verify_popen.returncode == 0:
-            return (True, output)
+            return (validation.Status([True]), output)
         else:
-            return (False, output)
+            return (validation.Status([False]), output)
 
     def extract_data(self, input_file, args, verbose=True):
         '''Extract data from output file.
@@ -483,14 +482,20 @@ Assume function is executed in self.path.'''
 
         os.chdir(oldcwd)
 
-    def _update_status(self, passed, inp_arg):
+    def _update_status(self, status, inp_arg):
         '''Update self.status with success of a test.'''
-        self.status[inp_arg][0] = True
-        if passed:
-            self.status[inp_arg][1] = True
+        if status:
+            self.status[inp_arg] = status
+        else:
+            # Something went wrong.  Store a Status failed object.
+            self.status[inp_arg] = validation.Status([False])
 
     def get_status(self):
         '''Get number of passed and number of ran tasks.'''
-        nran = sum(task[0] for task in self.status.values())
-        npassed = sum(task[1] for task in self.status.values())
-        return (npassed, nran)
+        # If there's an object (other than None/False) in the corresponding
+        # dict entry in self.status, then that test must have ran (albeit not
+        # necessarily successfuly!).
+        npassed = sum(True for stat in self.status.values() if stat.passed())
+        nwarning = sum(True for stat in self.status.values() if stat.warning())
+        nran = sum(True for stat in self.status.values() if stat)
+        return (npassed, nwarning, nran)
