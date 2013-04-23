@@ -512,7 +512,12 @@ verbose: if true additional output is produced; if false a minimal status is
     else:
         print(' [%s/%s]%s'% (npassed, nran, skipped_msg))
 
-    return 0 if nran == npassed else 1
+    # ternary operator not in python 2.4. :-(
+    ret_val = 0
+    if nran != npassed:
+        ret_val = 1
+
+    return ret_val
 
 #--- main runner ---
 
