@@ -495,7 +495,7 @@ Assume function is executed in self.path.'''
         # If there's an object (other than None/False) in the corresponding
         # dict entry in self.status, then that test must have ran (albeit not
         # necessarily successfuly!).
-        npassed = sum(True for stat in self.status.values() if stat.passed())
-        nwarning = sum(True for stat in self.status.values() if stat.warning())
+        npassed = sum(True for stat in self.status.values() if stat and stat.passed())
+        nwarning = sum(True for stat in self.status.values() if stat and stat.warning())
         nran = sum(True for stat in self.status.values() if stat)
         return (npassed, nwarning, nran)
