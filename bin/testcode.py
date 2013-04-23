@@ -502,24 +502,33 @@ verbose: if true additional output is produced; if false a minimal status is
     # Treat warnings as passes but add a note about how many warnings.
     npassed += nwarning
 
-    if skipped != 0:
-        skipped_msg = '  (Skipped: %s.)'  % (skipped)
+    # Pedantic.
+    if nwarning == 1:
+        warning = 'warning'
     else:
-        skipped_msg = ''
+        warning = 'warnings'
+    if nran == 1:
+        test = 'test'
+    else:
+        test = 'tests'
 
-    if nwarning != 0:
-        warning_msg = ' (%s warnings)' % (nwarning)
+    if skipped != 0 and nwarning != 0:
+        add_info_msg = ' (%s %s, %s skipped)' % (nwarning, warning, skipped)
+    elif skipped != 0:
+        add_info_msg = ' (%s skipped)' % (skipped,)
+    elif nwarning != 0:
+        add_info_msg = ' (%s %s)' % (nwarning, warning)
     else:
-        warning_msg = ''
+        add_info_msg = ''
 
     if verbose:
-        msg = 'All done.  %s%s out of %s tests passed%s.%s'
+        msg = 'All done.  %s%s out of %s %s passed%s.'
         if npassed == nran:
-            print(msg % ('', npassed, nran, warning_msg, skipped_msg))
+            print(msg % ('', npassed, nran, test, add_info_msg))
         else:
-            print(msg % ('ERROR: only ', npassed, nran, warning_msg, skipped_msg))
+            print(msg % ('ERROR: only ', npassed, nran, test, add_info_msg))
     else:
-        print(' [%s/%s%s]%s'% (npassed, nran, warning_msg, skipped_msg))
+        print(' [%s/%s%s]'% (npassed, nran, add_info_msg))
 
     # ternary operator not in python 2.4. :-(
     ret_val = 0
