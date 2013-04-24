@@ -200,8 +200,10 @@ config_file: location of the jobconfig file, either relative or absolute.'''
     else:
         test_categories = {}
 
-    # Parse individual tests.
-    tests = []
+    # Parse individual sections for tests.
+    # Note that sections/paths may contain globs and hence correspond to
+    # multiple tests.
+    test_info = {}
     for section in jobconfig.sections():
         # test program
         if jobconfig.has_option(section, 'program'):
@@ -262,61 +264,66 @@ config_file: location of the jobconfig file, either relative or absolute.'''
         # are multiple globbed_tests and the match in each path is different...
         inputs_args_opt = test_dict['inputs_args']
         for (name, path) in globbed_tests:
-            old_dir = os.getcwd()
-            os.chdir(path)
-            # Expand any globs in the input files.
-            inputs_args = []
-            for input_arg in inputs_args_opt:
-                # Be a little forgiving for the input_args config option.
-                # If we're given ('input'), then clearly the user meant for the
-                # args option to be empty.  However, literal_eval returns
-                # a string rather than a tuple in such cases, which causes
-                # problems.
-                if isinstance(input_arg, str):
-                    inp = input_arg
-                    arg = ''
-                elif len(input_arg) == 2:
-                    inp = input_arg[0]
-                    arg = input_arg[1]
-                else:
-                    inp = input_arg[0]
-                    arg = ''
-                if inp:
-                    # the test, error and benchmark filenames contain the input
-                    # filename, so we need to filter them out.
-                    inp_files = sorted(glob.glob(inp))
-                    if not inp_files:
-                        err = 'Cannot find input file %s in %s.' % (inp, path)
-                        raise exceptions.TestCodeError(err)
-                    for inp_file in inp_files:
-                        # We use a glob for the input argument to avoid the
-                        # case where the argument is empty and hence a pattern
-                        # such as *.inp also matches files like
-                        # test.out.test_id.inp=x.inp and hence considering
-                        # previous output files to actually be an input file in
-                        # their own right.
-                        test_files = [
-                             util.testcode_filename(stem[1], '*', '*', arg)
-                             for stem in testcode2._FILESTEM_TUPLE
-                                     ]
-                        testcode_files = []
-                        for tc_file in test_files:
-                            testcode_files.extend(glob.glob(tc_file))
-                        if inp_file not in testcode_files:
-                            inputs_args.append((inp_file, arg))
-                else:
-                    inputs_args.append((inp, arg))
-            test_dict['inputs_args'] = tuple(inputs_args)
-            os.chdir(old_dir)
-            # Create test.
-            if test_dict['run_concurrent']:
-                for input_arg in test_dict['inputs_args']:
-                    test_dict['inputs_args'] = (input_arg,)
-                    tests.append(testcode2.Test(name, test_program, path,
-                                                **test_dict))
+            test_info[name] = (test_program, path, copy.deepcopy(test_dict))
+
+    # Now create the tests (after finding out what the input files are).
+    tests = []
+    for (name, (test_program, path, test_dict)) in test_info.items():
+        old_dir = os.getcwd()
+        os.chdir(path)
+        # Expand any globs in the input files.
+        inputs_args = []
+        for input_arg in inputs_args_opt:
+            # Be a little forgiving for the input_args config option.
+            # If we're given ('input'), then clearly the user meant for the
+            # args option to be empty.  However, literal_eval returns
+            # a string rather than a tuple in such cases, which causes
+            # problems.
+            if isinstance(input_arg, str):
+                inp = input_arg
+                arg = ''
+            elif len(input_arg) == 2:
+                inp = input_arg[0]
+                arg = input_arg[1]
             else:
+                inp = input_arg[0]
+                arg = ''
+            if inp:
+                # the test, error and benchmark filenames contain the input
+                # filename, so we need to filter them out.
+                inp_files = sorted(glob.glob(inp))
+                if not inp_files:
+                    err = 'Cannot find input file %s in %s.' % (inp, path)
+                    raise exceptions.TestCodeError(err)
+                for inp_file in inp_files:
+                    # We use a glob for the input argument to avoid the
+                    # case where the argument is empty and hence a pattern
+                    # such as *.inp also matches files like
+                    # test.out.test_id.inp=x.inp and hence considering
+                    # previous output files to actually be an input file in
+                    # their own right.
+                    test_files = [
+                         util.testcode_filename(stem[1], '*', '*', arg)
+                         for stem in testcode2._FILESTEM_TUPLE
+                                 ]
+                    testcode_files = []
+                    for tc_file in test_files:
+                        testcode_files.extend(glob.glob(tc_file))
+                    if inp_file not in testcode_files:
+                        inputs_args.append((inp_file, arg))
+            else:
+                inputs_args.append((inp, arg))
+        test_dict['inputs_args'] = tuple(inputs_args)
+        os.chdir(old_dir)
+        # Create test.
+        if test_dict['run_concurrent']:
+            for input_arg in test_dict['inputs_args']:
+                test_dict['inputs_args'] = (input_arg,)
                 tests.append(testcode2.Test(name, test_program, path,
                                             **test_dict))
+        else:
+            tests.append(testcode2.Test(name, test_program, path,
+                                        **test_dict))
 
     return (tests, test_categories)
 
