@@ -499,6 +499,10 @@ verbose: if true additional output is produced; if false a minimal status is
     npassed = sum(status[0] for status in statuses)
     nwarning = sum(status[1] for status in statuses)
     nran = sum(status[2] for status in statuses)
+    failures = sorted(test.name for (test, status) in zip(tests, statuses)
+                      if status[0]+status[1] != status[2])
+    warnings = sorted(test.name for (test, status) in zip(tests, statuses)
+                      if status[1] != 0)
     # Treat warnings as passes but add a note about how many warnings.
     npassed += nwarning
 
@@ -527,6 +531,10 @@ verbose: if true additional output is produced; if false a minimal status is
             print(msg % ('', npassed, nran, test, add_info_msg))
         else:
             print(msg % ('ERROR: only ', npassed, nran, test, add_info_msg))
+        if failures:
+            print('Failures in:\n\t%s' % '\n\t'.join(failures))
+        if warnings:
+            print('Warnings in:\n\t%s' % '\n\t'.join(warnings))
     else:
         print(' [%s/%s%s]'% (npassed, nran, add_info_msg))
 
