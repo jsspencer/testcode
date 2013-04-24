@@ -342,6 +342,9 @@ def get_unique_test_id(tests, reuse_id=False, date_fmt='%d%m%Y'):
                     test_id = newest_test_id
     if reuse_id:
         # Want test_id to be the most recent set of tests.
+        if not newest_file:
+            err = 'Cannot find any previous test outputs.'
+            raise exceptions.TestCodeError(err)
         test_id = util.testcode_file_id(newest_file, testcode2.FILESTEM['test'])
     elif test_id[:len(todays_id)] == todays_id:
         # Have run at more than one test today already.  Create unique id.
