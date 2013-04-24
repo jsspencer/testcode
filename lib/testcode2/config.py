@@ -411,13 +411,13 @@ def select_tests(all_tests, test_categories, selected_categories, prefix=''):
         # test paths are relative to the config directory but absolute paths
         # are stored .
         found = False
-        cat_path = os.path.join(prefix, cat)
+        cat_paths = glob.glob(os.path.join(prefix, cat))
         for test in all_tests:
             if cat == test.name:
                 found = True
                 tests.append(test)
-            elif (os.path.exists(cat_path) and
-                    os.path.samefile(cat_path, test.path)):
+            elif compat.compat_any(os.path.exists(path) and
+                    os.path.samefile(path, test.path) for path in cat_paths):
                 found = True
                 tests.append(test)
         if not found:

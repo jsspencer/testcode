@@ -56,6 +56,7 @@ Options
     section of the :ref:`userconfig` file.
 -c CATEGORY, --category=CATEGORY
     Select the category/group of tests.  Can be specified multiple times.
+    Any wildcard(s) are used to refer to test(s) by their path are expanded.
     Default: use the `_default_` category if run is an action unless
     make-benchmarks is an action.  All other cases use the `_all_` category by
     default.  The `_default_` category contains all  tests unless otherwise set
