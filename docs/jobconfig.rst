@@ -69,6 +69,35 @@ tolerance [tolerance format (see :ref:`tolerance`)]
     Tolerances for comparing test output to the benchmark output.  Default:
     inherits from the settings in :ref:`userconfig`.
 
+If a test is defined via a category/path containing wildcards and explicitly,
+then the explicit category will inherit any settings from the wildcard
+definition.  For example, given the subdirectories ``t1`` and ``t2``, each
+containing tests, the definition::
+
+    [t*]
+    inputs_args = ('test.in', '')
+    [t1]
+    nprocs = 2
+
+is entirely equivalent to::
+
+    [t1]
+    nprocs = 2
+    inputs_args = ('test.in', '')
+    [t2]
+    inputs_args = ('test.in', '')
+
+.. note::
+
+    Explicitly defining a test multiple times, e.g.::
+
+        [t1]
+        inputs_args = ('inp1', '')
+        [t1]
+        inputs_args = ('inp2', '')
+
+    is not permitted and the resultant settings are not uniquely defined.
+
 Test categories
 ---------------
 

@@ -203,27 +203,34 @@ config_file: location of the jobconfig file, either relative or absolute.'''
     # Parse individual sections for tests.
     # Note that sections/paths may contain globs and hence correspond to
     # multiple tests.
-    test_info = {}
+    # First, find out the tests each section corresponds to.
+    test_sections = []
     for section in jobconfig.sections():
+        # Expand any globs in the path/section name and create individual Test
+        # objects for each one.
+        if jobconfig.has_option(section, 'path'):
+            path = os.path.join(config_directory,
+                                jobconfig.get(section, 'path'))
+            jobconfig.remove_option('path')
+            globbed_tests = [(section, test_path)
+                                            for test_path in glob.glob(path)]
+        else:
+            path = os.path.join(config_directory, section)
+            globbed_tests = [(test_path, test_path)
+                                            for test_path in glob.glob(path)]
+            test_sections.append((section, globbed_tests))
+    test_sections.sort(key=lambda sec_info: len(sec_info[1]), reverse=True)
+    test_info = {}
+    for (section, globbed_tests) in test_sections:
+        test_dict = {}
         # test program
         if jobconfig.has_option(section, 'program'):
             test_program = test_programs[jobconfig.get(section, 'program')]
         else:
             test_program = test_programs[user_options['default_program']]
-        # Copy default test options.
-        default_test = test_program.default_test_settings
-        test_dict = dict(
-                            inputs_args=default_test.inputs_args,
-                            output=default_test.output,
-                            default_tolerance=default_test.default_tolerance,
-                            tolerances = copy.deepcopy(default_test.tolerances),
-                            nprocs=default_test.nprocs,
-                            min_nprocs=default_test.min_nprocs,
-                            max_nprocs=default_test.max_nprocs,
-                            run_concurrent=default_test.run_concurrent,
-                        )
         # tolerances
         if jobconfig.has_option(section, 'tolerance'):
+            test_dict['tolerances'] = {}
             for item in (
                     compat.literal_eval('%s,' %
                         jobconfig.get(section,'tolerance'))
@@ -231,8 +238,8 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                 (name, tol) = parse_tolerance_tuple(item)
                 test_dict['tolerances'][name] = tol
             jobconfig.remove_option(section, 'tolerance')
-        if None in test_dict['tolerances']:
-            test_dict['default_tolerance'] = test_dict['tolerances'][None]
+            if None in test_dict['tolerances']:
+                test_dict['default_tolerance'] = test_dict['tolerances'][None]
         # inputs and arguments
         if jobconfig.has_option(section, 'inputs_args'):
             # format: (input, arg), (input, arg)'
@@ -248,23 +255,38 @@ config_file: location of the jobconfig file, either relative or absolute.'''
         for option in jobconfig.options(section):
             test_dict[option] = jobconfig.get(section, option)
         for key in ('nprocs', 'max_nprocs', 'min_nprocs'):
-            test_dict[key] = int(test_dict[key])
-        # Expand any globs in the path/section name and create individual Test
-        # objects for each one.
-        if 'path' in test_dict:
-            path = os.path.join(config_directory, test_dict['path'])
-            globbed_tests = [(section, test_path)
-                                            for test_path in glob.glob(path)]
-            test_dict.pop('path')
-        else:
-            path = os.path.join(config_directory, section)
-            globbed_tests = [(test_path, test_path)
-                                            for test_path in glob.glob(path)]
-        # need to save test_dict['inputs_args'] in case it's a wildcard, there
-        # are multiple globbed_tests and the match in each path is different...
-        inputs_args_opt = test_dict['inputs_args']
+            if key in test_dict:
+                test_dict[key] = int(test_dict[key])
         for (name, path) in globbed_tests:
-            test_info[name] = (test_program, path, copy.deepcopy(test_dict))
+            if name in test_info:
+                # Just update existing info.
+                test = test_info[name]
+                if  'tolerances' in test_dict:
+                    test[2]['tolerances'].update(test_dict['tolerances'])
+                    test_dict.pop('tolerances')
+                test[0] = test_program
+                test[1] = path
+                test[2].update(test_dict)
+            else:
+                # Create new test_info value.
+                # Merge with default values.
+                # Default test options.
+                default_test = test_program.default_test_settings
+                test = dict(
+                        inputs_args=default_test.inputs_args,
+                        output=default_test.output,
+                        default_tolerance=default_test.default_tolerance,
+                        tolerances = copy.deepcopy(default_test.tolerances),
+                        nprocs=default_test.nprocs,
+                        min_nprocs=default_test.min_nprocs,
+                        max_nprocs=default_test.max_nprocs,
+                        run_concurrent=default_test.run_concurrent,
+                    )
+                if  'tolerances' in test_dict:
+                    test['tolerances'].update(test_dict['tolerances'])
+                    test_dict.pop('tolerances')
+                test.update(test_dict)
+                test_info[name] = [test_program, path, copy.deepcopy(test)]
 
     # Now create the tests (after finding out what the input files are).
     tests = []
@@ -273,7 +295,7 @@ config_file: location of the jobconfig file, either relative or absolute.'''
         os.chdir(path)
         # Expand any globs in the input files.
         inputs_args = []
-        for input_arg in inputs_args_opt:
+        for input_arg in test_dict['inputs_args']:
             # Be a little forgiving for the input_args config option.
             # If we're given ('input'), then clearly the user meant for the
             # args option to be empty.  However, literal_eval returns
@@ -322,8 +344,7 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                 tests.append(testcode2.Test(name, test_program, path,
                                             **test_dict))
         else:
-            tests.append(testcode2.Test(name, test_program, path,
-                                        **test_dict))
+            tests.append(testcode2.Test(name, test_program, path, **test_dict))
 
     return (tests, test_categories)
 
