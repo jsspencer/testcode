@@ -420,7 +420,8 @@ copy_files_since: files produced since the timestamp (in seconds since the
     # All tests passed?
     statuses = [test.get_status() for test in tests]
     npassed = sum(status[0] for status in statuses)
-    nran = sum(status[1] for status in statuses)
+    nwarning = sum(status[1] for status in statuses)
+    nran = sum(status[2] for status in statuses)
     if npassed != nran:
         ans = ''
         print('Not all tests passed.')
@@ -496,23 +497,45 @@ verbose: if true additional output is produced; if false a minimal status is
 
     statuses = [test.get_status() for test in tests]
     npassed = sum(status[0] for status in statuses)
-    nran = sum(status[1] for status in statuses)
+    nwarning = sum(status[1] for status in statuses)
+    nran = sum(status[2] for status in statuses)
+    # Treat warnings as passes but add a note about how many warnings.
+    npassed += nwarning
 
-    if skipped != 0:
-        skipped_msg = '  (Skipped: %s.)'  % (skipped)
+    # Pedantic.
+    if nwarning == 1:
+        warning = 'warning'
     else:
-        skipped_msg = ''
+        warning = 'warnings'
+    if nran == 1:
+        test = 'test'
+    else:
+        test = 'tests'
+
+    if skipped != 0 and nwarning != 0:
+        add_info_msg = ' (%s %s, %s skipped)' % (nwarning, warning, skipped)
+    elif skipped != 0:
+        add_info_msg = ' (%s skipped)' % (skipped,)
+    elif nwarning != 0:
+        add_info_msg = ' (%s %s)' % (nwarning, warning)
+    else:
+        add_info_msg = ''
 
     if verbose:
-        msg = 'All done.  %s%s out of %s tests passed.' + skipped_msg
+        msg = 'All done.  %s%s out of %s %s passed%s.'
         if npassed == nran:
-            print(msg % ('', npassed, nran))
+            print(msg % ('', npassed, nran, test, add_info_msg))
         else:
-            print(msg % ('WARNING: only ', npassed, nran))
+            print(msg % ('ERROR: only ', npassed, nran, test, add_info_msg))
     else:
-        print(' [%s/%s]%s'% (npassed, nran, skipped_msg))
+        print(' [%s/%s%s]'% (npassed, nran, add_info_msg))
 
-    return 0 if nran == npassed else 1
+    # ternary operator not in python 2.4. :-(
+    ret_val = 0
+    if nran != npassed:
+        ret_val = 1
+
+    return ret_val
 
 #--- main runner ---
 
