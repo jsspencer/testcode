@@ -458,11 +458,15 @@ Assume function is executed in self.path.'''
         oldcwd = os.getcwd()
         os.chdir(self.path)
 
+        test_files = []
         for (inp, arg) in self.inputs_args:
             test_file = util.testcode_filename(FILESTEM['test'],
                     self.test_program.test_id, inp, arg)
+            err_file = util.testcode_filename(FILESTEM['error'],
+                    self.test_program.test_id, inp, arg)
             bench_file = util.testcode_filename(FILESTEM['benchmark'],
                     benchmark, inp, arg)
+            test_files.extend((test_file, err_file, bench_file))
             shutil.copy(test_file, bench_file)
 
         if copy_files_since:
@@ -471,7 +475,8 @@ Assume function is executed in self.path.'''
             if os.path.isdir(copy_files_path):
                 for data_file in glob.glob('*'):
                     if (os.path.isfile(data_file) and
-                            os.stat(data_file)[-2] >= copy_files_since):
+                            os.stat(data_file)[-2] >= copy_files_since and
+                            data_file not in test_files):
                         bench_data_file = os.path.join(copy_files_path,
                                 data_file)
                         # shutil.copy can't overwrite files so remove old ones
