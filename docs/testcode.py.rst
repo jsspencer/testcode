@@ -97,6 +97,14 @@ Options
 --user-option=USER_OPTION
     Override/add setting to :ref:`userconfig`.  Takes three arguments.  Format:
     section_name option_name value.  Default: none.
+-v, --verbose
+    Increase verbosity of output.  Can be specified up to two times.
+    The default behaviour is to print out the test and its status.  (See the
+    --quiet option to suppress even this.)  Specify -v or --verbose once to
+    show (if relevant) which data values caused warnings or failures.
+    Specify -v or --verbose twice to see all (external) commands run and all
+    data extracted from running the tests.  Using the maximum verbosity level
+    is highly recommended for debugging.
 
 Exit status
 -----------

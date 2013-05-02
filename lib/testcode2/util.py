@@ -207,3 +207,15 @@ def pretty_print_table(labels, dicts):
     table = '\n'.join(table)
     return (table or
             'No data for %s.' % ('; '.join(label.strip() for label in labels)))
+
+def info_line(path, input_file, args, rundir):
+    '''Produce a (terse) string describing a test.'''
+    if rundir:
+        path = os.path.relpath(path, rundir)
+    info_line = path
+    if input_file:
+        info_line += ' - %s' % (input_file)
+    if args:
+        info_line += ' (arg(s): %s)' % (args)
+    info_line += ': '
+    return info_line

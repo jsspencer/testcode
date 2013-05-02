@@ -40,24 +40,27 @@ status: existing status to use.  bools is ignored if status is supplied.'''
     def failed(self):
         '''Return true if stored status is failed.'''
         return self.status == self._fail
-    def print_status(self, msg=None, verbose=True, vspace=True):
+    def print_status(self, msg=None, verbose=1, vspace=True):
         '''Print status.
 
 msg: optional message to print out after status.
-verbose: suppress all output except for . (for pass), W (for warning/partial
-         pass) and F (for fail).
+verbose: 0: suppress all output except for . (for pass), W (for warning/partial
+            pass) and F (for fail) without a newline.
+         1: print 'Passed', 'WARNING' or '**FAILED**'.
+         2: as for 1 plus print msg (if supplied).
+         3: as for 2 plus print a blank line.
 vspace: print out extra new line afterwards.
 '''
-        if verbose:
+        if verbose > 0:
             if self.status == self._pass:
                 print('Passed.')
             elif self.status == self._partial:
                 print('WARNING.')
             else:
                 print('**FAILED**.')
-            if msg:
+            if msg and verbose > 1:
                 print(msg)
-            if vspace:
+            if vspace and verbose > 2:
                 print('')
         else:
             if self.status == self._pass:

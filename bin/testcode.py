@@ -159,8 +159,9 @@ actions: list of testcode2 actions to run.
     parser.add_option('-p', '--processors', type='int', default=-1,
             dest='nprocs', help='Set the number of processors to run each test '
             'on.  Default: use settings in configuration files.')
-    parser.add_option('-q', '--quiet', action='store_false', dest='verbose',
-            default=True, help='Print only minimal output.  Default: False.')
+    parser.add_option('-q', '--quiet', action='store_const', const=0, 
+            dest='verbose', default=True, 
+            help='Print only minimal output.  Default: False.')
     parser.add_option('-s', '--submit', dest='queue_system', default=None,
             help='Submit tests to a queueing system of the specified type.  '
             'Only PBS system is currently implemented.  Default: %default.')
@@ -178,6 +179,9 @@ actions: list of testcode2 actions to run.
             default=[], nargs=3, help='Override/add setting to userconfig.  '
             'Takes three arguments.  Format: section_name option_name value.  '
             'Default: none.')
+    parser.add_option('-v', '--verbose', default=1, action="count", 
+            dest='verbose', help='Increase verbosity of output.  Can be '
+            'specified multiple times.')
 
     (options, args) = parser.parse_args(args)
 
@@ -301,7 +305,8 @@ run_test_args: arguments to pass to test.run_test method.
         slock = threading.Lock()
         jobs = [threading.Thread(
                     target=run_test_worker,
-                    args=(semaphore, slock, test, verbose, cluster_queue)
+                    args=(semaphore, slock, test, verbose, cluster_queue,
+                          os.getcwd())
                                 )
                     for test in tests]
         for job in jobs:
@@ -331,7 +336,7 @@ verbose: print verbose output if true.
                     )
             test_file = os.path.join(test.path, test_file)
             if os.path.exists(test_file):
-                test.verify_job(inp, args, verbose)
+                test.verify_job(inp, args, verbose, os.getcwd())
             else:
                 if verbose:
                     print('Skipping comparison.  '
@@ -486,7 +491,7 @@ verbose: true if output is required; if false no output is produced.
         print('Benchmark: %s.' % (tests[0].test_program.benchmark))
         print('')
 
-def end_status(tests, skipped=0, verbose=True):
+def end_status(tests, skipped=0, verbose=1):
     '''Print a footer containing useful information.
 
 tests: list of tests.
@@ -525,7 +530,9 @@ verbose: if true additional output is produced; if false a minimal status is
     else:
         add_info_msg = ''
 
-    if verbose:
+    if verbose > 0:
+        if verbose < 3:
+            print('') # Obsessive formatting.
         msg = 'All done.  %s%s out of %s %s passed%s.'
         if npassed == nran:
             print(msg % ('', npassed, nran, test, add_info_msg))

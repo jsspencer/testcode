@@ -188,7 +188,7 @@ class Test:
                                                self._move_old_output_files)
         self.verify_job = DIR_LOCK.in_dir(self.path)(self._verify_job)
 
-    def run_test(self, verbose=True, cluster_queue=None):
+    def run_test(self, verbose=1, cluster_queue=None, rundir=None):
         '''Run all jobs in test.'''
 
         try:
@@ -232,13 +232,13 @@ class Test:
                 if cluster_queue:
                     # Did all of them at once.
                     for (test_input, test_arg) in self.inputs_args:
-                        self.verify_job(test_input, test_arg, verbose)
+                        self.verify_job(test_input, test_arg, verbose, rundir)
                 else:
                     # Did one job at a time.
                     (test_input, test_arg) = self.inputs_args[ind]
                     if self.output:
                         self.move_output_to_test_output(test_files[ind])
-                    self.verify_job(test_input, test_arg, verbose)
+                    self.verify_job(test_input, test_arg, verbose, rundir)
         except exceptions.RunError:
             err = sys.exc_info()[1]
             err = 'Test(s) in %s failed.\n%s' % (self.path, err)
@@ -246,7 +246,7 @@ class Test:
             self._update_status(status, (test_input, test_arg))
             status.print_status(err, verbose)
 
-    def _start_job(self, cmd, cluster_queue=None, verbose=True):
+    def _start_job(self, cmd, cluster_queue=None, verbose=1):
         '''Start test running.  Requires directory lock.
 
 IMPORTANT: use self.start_job rather than self._start_job if using multiple
@@ -262,13 +262,13 @@ first, during initialisation.'''
             job = queues.ClusterQueueJob(submit_file, system=cluster_queue)
             job.create_submit_file(tp_ptr.submit_pattern, cmd,
                                    tp_ptr.submit_template)
-            if verbose:
+            if verbose > 2:
                 print('Submitting tests using %s (template submit file) in %s'
                            % (tp_ptr.submit_template, self.path))
             job.start_job()
         else:
             # Run locally via subprocess.
-            if verbose:
+            if verbose > 2:
                 print('Running test using %s in %s\n' % (cmd, self.path))
             try:
                 job = subprocess.Popen(cmd, shell=True)
@@ -306,7 +306,7 @@ enters self.path.
                      % (self.output, len(out_files), out_files))
             raise exceptions.RunError(err)
 
-    def _move_old_output_files(self, verbose):
+    def _move_old_output_files(self, verbose=1):
         '''Move output to the testcode output file.  Requires directory lock.
 
 This is used when a program writes to standard output rather than to STDOUT.
@@ -321,7 +321,7 @@ enters self.path.
             old_out_files = glob.glob(self.output)
             if old_out_files:
                 out_dir = 'test.prev.output.%s' % (self.test_program.test_id)
-                if verbose:
+                if verbose > 2:
                     print('WARNING: found existing files matching output '
                           'pattern: %s.' % self.output)
                     print('WARNING: moving existing output files (%s) to %s.\n'
@@ -331,7 +331,7 @@ enters self.path.
                 for out_file in old_out_files:
                     shutil.move(out_file, out_dir)
 
-    def _verify_job(self, input_file, args, verbose=True):
+    def _verify_job(self, input_file, args, verbose=1, rundir=None):
         '''Check job against benchmark.
 
 Assume function is executed in self.path.
@@ -342,41 +342,48 @@ threads.
 Decorated to verify_job, which acquires directory lock and enters self.path
 first, during initialisation.'''
         if self.test_program.verify:
-            (status, msg) = self.verify_job_external(input_file, args, verbose)
+            (status, msg) = self.verify_job_external(input_file, args, verbose,
+                                                     rundir)
         else:
-            (bench_out, test_out) = self.extract_data(input_file, args, verbose)
+            (bench_out, test_out) = self.extract_data(input_file, args, verbose,
+                                                      rundir)
             (comparable, status, msg) = validation.compare_data(bench_out,
                     test_out, self.default_tolerance, self.tolerances)
-            if comparable:
-                # Combine test and benchmark dictionaries.
-                data_table = util.pretty_print_table( ['benchmark', 'test'],
-                                                      [bench_out, test_out])
-            else:
-                # Print dictionaries separately--couldn't even compare them!
-                data_table = '\n'.join((
+            if verbose > 2:
+                # Include data tables in output.
+                if comparable:
+                    # Combine test and benchmark dictionaries.
+                    data_table = util.pretty_print_table( ['benchmark', 'test'],
+                                                          [bench_out, test_out])
+                else:
+                    # Print dictionaries separately--couldn't even compare them!
+                    data_table = '\n'.join((
                             util.pretty_print_table(['benchmark'], [bench_out]),
                             util.pretty_print_table(['test     '], [test_out])))
-            if msg.strip():
-                # join data table with error message from
-                # validation.compare_data.
-                msg = '\n'.join((msg, data_table))
-            else:
-                msg = data_table
+                if msg.strip():
+                    # join data table with error message from
+                    # validation.compare_data.
+                    msg = '\n'.join((msg, data_table))
+                else:
+                    msg = data_table
 
         self._update_status(status, (input_file, args))
         status.print_status(msg, verbose)
 
         return (status, msg)
 
-    def verify_job_external(self, input_file, args, verbose=True):
+    def verify_job_external(self, input_file, args, verbose=1, rundir=None):
         '''Run user-supplied verifier script.
 
 Assume function is executed in self.path.'''
         verify_cmd = self.test_program.extract_cmd(input_file, args)[0]
         try:
-            if verbose:
+            if verbose > 2:
                 print('Analysing test using %s in %s.' %
                         (verify_cmd, self.path))
+            elif verbose > 0:
+                info_line = util.info_line(self.path, input_file, args, rundir)
+                sys.stdout.write(info_line)
             verify_popen = subprocess.Popen(verify_cmd, shell=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             verify_popen.wait()
@@ -386,12 +393,15 @@ Assume function is executed in self.path.'''
             err = 'Execution of test failed: %s' % (sys.exc_info()[1],)
             raise exceptions.RunError(err)
         output = verify_popen.communicate()[0].decode('utf-8')
+        if verbose < 2:
+            # Suppress output.  (hackhack)
+            output = ''
         if verify_popen.returncode == 0:
             return (validation.Status([True]), output)
         else:
             return (validation.Status([False]), output)
 
-    def extract_data(self, input_file, args, verbose=True):
+    def extract_data(self, input_file, args, verbose=1, rundir=None):
         '''Extract data from output file.
 
 Assume function is executed in self.path.'''
@@ -404,9 +414,12 @@ Assume function is executed in self.path.'''
                     util.testcode_filename(FILESTEM['test'],
                             tp_ptr.test_id, input_file, args),
                          ]
-            if verbose:
+            if verbose > 2:
                 print('Analysing output using data_tag %s in %s on files %s.' %
                         (tp_ptr.data_tag, self.path, ' and '.join(data_files)))
+            elif verbose > 0:
+                info_line = util.info_line(self.path, input_file, args, rundir)
+                sys.stdout.write(info_line)
             outputs = [util.extract_tagged_data(tp_ptr.data_tag, dfile)
                     for dfile in data_files]
         else:
@@ -418,9 +431,13 @@ Assume function is executed in self.path.'''
             outputs = []
             for cmd in extract_cmds:
                 try:
-                    if verbose:
+                    if verbose > 2:
                         print('Analysing output using %s in %s.' %
                                 (cmd, self.path))
+                    elif verbose > 0:
+                        info_line = util.info_line(self.path, input_file, args,
+                                                   rundir)
+                        sys.stdout.write(info_line)
                     extract_popen = subprocess.Popen(cmd, shell=True,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     extract_popen.wait()
