@@ -10,6 +10,7 @@ Classes and functions for comparing data.
 
 import sys
 
+import testcode2.ansi as ansi
 import testcode2.compatibility as compat
 import testcode2.exceptions as exceptions
 
@@ -55,9 +56,9 @@ vspace: print out extra new line afterwards.
             if self.status == self._pass:
                 print('Passed.')
             elif self.status == self._partial:
-                print('WARNING.')
+                print('%s.' % ansi.ansi_format('WARNING', 'blue'))
             else:
-                print('**FAILED**.')
+                print('%s.' % ansi.ansi_format('**FAILED**', 'red', 'normal', 'bold'))
             if msg and verbose > 1:
                 print(msg)
             if vspace and verbose > 2:
