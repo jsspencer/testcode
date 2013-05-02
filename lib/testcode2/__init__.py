@@ -241,7 +241,8 @@ class Test:
                     self.verify_job(test_input, test_arg, verbose, rundir)
         except exceptions.RunError:
             err = sys.exc_info()[1]
-            err = 'Test(s) in %s failed.\n%s' % (self.path, err)
+            if verbose > 2:
+                err = 'Test(s) in %s failed.\n%s' % (self.path, err)
             status = validation.Status([False])
             self._update_status(status, (test_input, test_arg))
             status.print_status(err, verbose)

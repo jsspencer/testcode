@@ -531,7 +531,7 @@ verbose: if true additional output is produced; if false a minimal status is
         add_info_msg = ''
 
     if verbose > 0:
-        if verbose < 3:
+        if verbose < 2:
             print('') # Obsessive formatting.
         msg = 'All done.  %s%s out of %s %s passed%s.'
         if npassed == nran:

@@ -50,7 +50,7 @@ verbose: 0: suppress all output except for . (for pass), W (for warning/partial
          1: print 'Passed', 'WARNING' or '**FAILED**'.
          2: as for 1 plus print msg (if supplied).
          3: as for 2 plus print a blank line.
-vspace: print out extra new line afterwards.
+vspace: print out extra new line afterwards if verbose > 1.
 '''
         if verbose > 0:
             if self.status == self._pass:
@@ -61,7 +61,7 @@ vspace: print out extra new line afterwards.
                 print('%s.' % ansi.ansi_format('**FAILED**', 'red', 'normal', 'bold'))
             if msg and verbose > 1:
                 print(msg)
-            if vspace and verbose > 2:
+            if vspace and verbose >  1:
                 print('')
         else:
             if self.status == self._pass:
