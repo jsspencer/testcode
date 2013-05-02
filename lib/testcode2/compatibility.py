@@ -118,6 +118,29 @@ From: http://mail.python.org/pipermail/python-list/2009-September/1219992.html
             raise ValueError('malformed string')
         return _convert(node_or_string)
 
+# os.path.relpath was introduced in python 2.6.
+try:
+    from os.path import relpath
+except ImportError:
+    import os.path
+    def relpath(path, start=os.path.curdir):
+        """Return a relative version of a path"""
+
+        if not path:
+            raise ValueError("no path specified")
+
+        filter_null = lambda lll: [x for x in lll if x]
+
+        start_list = filter_null(os.path.abspath(start).split(os.path.sep))
+        path_list = filter_null(os.path.abspath(path).split(os.path.sep))
+
+        common = len(os.path.commonprefix([start_list, path_list]))
+
+        rel_list = [os.pardir] * (len(start_list)-common) + path_list[common:]
+        if not rel_list:
+            return os.path.curdir
+        return os.path.join(*rel_list)
+
 ### python 2 ###
 
 try:
