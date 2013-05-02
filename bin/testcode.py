@@ -106,6 +106,9 @@ tests: list of selected tests.
         tests = testcode2.config.select_tests(tests, test_categories,
                 categories, os.path.abspath(os.path.dirname(userconfig)))
 
+    # Sort by path (as that's how they appear in the user's directory).
+    tests.sort(key=lambda test: test.path)
+
     if not test_id:
         test_id = testcode2.config.get_unique_test_id(tests, reuse_id,
                 user_options['date_fmt'])
