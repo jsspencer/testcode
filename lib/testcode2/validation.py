@@ -97,6 +97,7 @@ strict: if true, then require numbers to be within both thresholds.
         '''Compare test and benchmark values to within the tolerances.'''
         status = Status([True])
         msg = ['values are within tolerance.']
+        compare = '(Test: %s.  Benchmark: %s.)' % (test_val, benchmark_val)
         try:
             # Check float is not NaN (which we can't compare).
             if compat.isnan(test_val) or compat.isnan(benchmark_val):
@@ -124,15 +125,15 @@ strict: if true, then require numbers to be within both thresholds.
                     err_stat = 'ERROR: '
                 msg = []
                 if self.absolute and msg_absolute:
-                    msg.append('%s%s' % (err_stat, msg_absolute))
+                    msg.append('%s%s %s' % (err_stat, msg_absolute, compare))
                 if self.relative and msg_relative:
-                    msg.append('%s%s' % (err_stat, msg_relative))
-        except TypeError:
+                    msg.append('%s%s %s' % (err_stat, msg_relative, compare))
+        except TypeError, err:
             if test_val != benchmark_val:
                 # require test and benchmark values to be equal (within python's
                 # definition of equality).
                 status = Status([False])
-                msg = ['values are different.']
+                msg = ['values are different. ' + compare]
         if key and msg:
             msg.insert(0, key)
             msg = '\n    '.join(msg)
