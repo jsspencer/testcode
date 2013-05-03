@@ -102,7 +102,7 @@ strict: if true, then require numbers to be within both thresholds.
             # Check float is not NaN (which we can't compare).
             if compat.isnan(test_val) or compat.isnan(benchmark_val):
                 status = Status([False])
-                msg = 'cannot compare NaNs.'
+                msg = ['cannot compare NaNs.']
             else:
                 # Check if values are within tolerances.
                 (status_absolute, msg_absolute) = \
