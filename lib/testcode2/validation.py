@@ -128,7 +128,7 @@ strict: if true, then require numbers to be within both thresholds.
                     msg.append('%s%s %s' % (err_stat, msg_absolute, compare))
                 if self.relative and msg_relative:
                     msg.append('%s%s %s' % (err_stat, msg_relative, compare))
-        except TypeError, err:
+        except TypeError:
             if test_val != benchmark_val:
                 # require test and benchmark values to be equal (within python's
                 # definition of equality).
