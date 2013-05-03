@@ -258,15 +258,23 @@ config_file: location of the jobconfig file, either relative or absolute.'''
             if key in test_dict:
                 test_dict[key] = int(test_dict[key])
         for (name, path) in globbed_tests:
+            # Need to take care with tolerances: want to *update* existing
+            # tolerance dictionary rather than overwrite it.
+            # This means we can't just use test_dict to update the relevant
+            # dictionary in test_info.
+            tol = None
             if name in test_info:
                 # Just update existing info.
                 test = test_info[name]
                 if  'tolerances' in test_dict:
+                    print("updating tols", name)
                     test[2]['tolerances'].update(test_dict['tolerances'])
-                    test_dict.pop('tolerances')
+                    tol = test_dict.pop('tolerances')
                 test[0] = test_program
                 test[1] = path
                 test[2].update(test_dict)
+                if tol:
+                    test_dict['tolerances'] = tol
             else:
                 # Create new test_info value.
                 # Merge with default values.
@@ -284,8 +292,11 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                     )
                 if  'tolerances' in test_dict:
                     test['tolerances'].update(test_dict['tolerances'])
-                    test_dict.pop('tolerances')
+                    tol = test_dict.pop('tolerances')
                 test.update(test_dict)
+                # restore tolerances for next test in the glob.
+                if tol:
+                    test_dict['tolerances'] = tol
                 test_info[name] = [test_program, path, copy.deepcopy(test)]
 
     # Now create the tests (after finding out what the input files are).
