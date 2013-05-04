@@ -319,7 +319,7 @@ run_test_args: arguments to pass to test.run_test method.
     else:
         # run straight through, one at a time
         for test in tests:
-            test.run_test(verbose, cluster_queue)
+            test.run_test(verbose, cluster_queue, os.getcwd())
 
 
 def compare_tests(tests, verbose=1):
