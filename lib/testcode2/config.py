@@ -21,6 +21,15 @@ import testcode2.util as util
 import testcode2.validation as validation
 import testcode2.vcs as vcs
 
+def eval_nested_tuple(string):
+    nested_tuple = compat.literal_eval(string)
+    if isinstance(nested_tuple[0], (list, tuple)):
+        return nested_tuple
+    else:
+        # Append a comma to the option to ensure literal_eval returns a tuple
+        # of tuples, even if the option only contains a single tuple.
+        return compat.literal_eval('%s,' % string)
+
 def parse_tolerance_tuple(val):
     '''Parse (abs_tol,rel_tol,name,strict).'''
     if len(val) >= 4:
@@ -75,12 +84,9 @@ config_file: location of the userconfig file, either relative or absolute.'''
     if userconfig.has_section('user'):
         user_options.update(dict(userconfig.items('user')))
         userconfig.remove_section('user')
-        # Append a comma to the option to ensure literal_eval returns a tuple
-        # of tuples, even if the option only contains a single tuple.
         user_options['tolerance'] = dict(
                 (parse_tolerance_tuple(item)
-                     for item in
-                        compat.literal_eval('%s,' % user_options['tolerance']))
+                     for item in eval_nested_tuple(user_options['tolerance']))
                                         )
     else:
         raise exceptions.TestCodeError(
@@ -118,8 +124,7 @@ config_file: location of the userconfig file, either relative or absolute.'''
         # First, tolerances...
         if userconfig.has_option(section, 'tolerance'):
             for item in (
-                    compat.literal_eval('%s,' %
-                        userconfig.get(section, 'tolerance'))
+                    eval_nested_tuple(userconfig.get(section, 'tolerance'))
                         ):
                 (name, tol) = parse_tolerance_tuple(item)
                 tolerances[name] = tol
@@ -147,8 +152,8 @@ config_file: location of the userconfig file, either relative or absolute.'''
                 test_dict[key] = int(test_dict[key])
         if 'inputs_args' in test_dict:
             # format: (input, arg), (input, arg)'
-            test_dict['inputs_args'] = compat.literal_eval(
-                                               '%s,' % test_dict['inputs_args'])
+            test_dict['inputs_args'] = (
+                    eval_nested_tuple(test_dict['inputs_args']))
         # Create a default test.
         tp_dict['default_test_settings'] = testcode2.Test(None, None, None,
                 **test_dict)
@@ -232,8 +237,7 @@ config_file: location of the jobconfig file, either relative or absolute.'''
         if jobconfig.has_option(section, 'tolerance'):
             test_dict['tolerances'] = {}
             for item in (
-                    compat.literal_eval('%s,' %
-                        jobconfig.get(section,'tolerance'))
+                    eval_nested_tuple(jobconfig.get(section,'tolerance'))
                         ):
                 (name, tol) = parse_tolerance_tuple(item)
                 test_dict['tolerances'][name] = tol
@@ -243,9 +247,8 @@ config_file: location of the jobconfig file, either relative or absolute.'''
         # inputs and arguments
         if jobconfig.has_option(section, 'inputs_args'):
             # format: (input, arg), (input, arg)'
-            test_dict['inputs_args'] = compat.literal_eval(
-                                   '%s,' % jobconfig.get(section, 'inputs_args')
-                                                          )
+            test_dict['inputs_args'] = (
+                    eval_nested_tuple(jobconfig.get(section, 'inputs_args')))
             jobconfig.remove_option(section, 'inputs_args')
         if jobconfig.has_option(section, 'run_concurrent'):
             test_dict['run_concurrent'] = \
