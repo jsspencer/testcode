@@ -250,11 +250,11 @@ actions: list of testcode2 actions to run.
 
 #--- actions ---
 
-def run_tests(tests, verbose, cluster_queue=None, tot_nprocs=0):
+def run_tests(tests, verbose=1, cluster_queue=None, tot_nprocs=0):
     '''Run tests.
 
 tests: list of tests.
-verbose: print verbose output if true.
+verbose: level of verbosity in output.
 cluster_queue: name of cluster system to use.  If None, tests are run locally.
     Currently only PBS is implemented.
 tot_nprocs: total number of processors available to run tests on.  As many
@@ -322,11 +322,11 @@ run_test_args: arguments to pass to test.run_test method.
             test.run_test(verbose, cluster_queue)
 
 
-def compare_tests(tests, verbose):
+def compare_tests(tests, verbose=1):
     '''Compare tests.
 
 tests: list of tests.
-verbose: print verbose output if true.
+verbose: level of verbosity in output.
 '''
 
     nskipped = 0
@@ -341,19 +341,22 @@ verbose: print verbose output if true.
             if os.path.exists(test_file):
                 test.verify_job(inp, args, verbose, os.getcwd())
             else:
-                if verbose:
+                if verbose > 0 and verbose < 2:
+                    info_line = testcode2.util.info_line(test.path, inp, args, os.getcwd())
+                    print('%sSkipped.' % info_line)
+                if verbose > 1:
                     print('Skipping comparison.  '
                           'Test file does not exist: %s.\n' % test_file)
                 nskipped += 1
 
     return nskipped
 
-def diff_tests(tests, diff_program, verbose):
+def diff_tests(tests, diff_program, verbose=1):
     '''Diff tests.
 
 tests: list of tests.
 diff_program: diff program to use.
-verbose: print verbose output if true.
+verbose: level of verbosity in output.
 '''
 
     for test in tests:
@@ -368,11 +371,11 @@ verbose: print verbose output if true.
                     testcode2.FILESTEM['test'],
                     test.test_program.test_id, inp, args
                     )
-            if verbose:
+            if verbose > 0:
                 print('Diffing %s and %s in %s.' % (benchmark, test_file,
                     test.path))
             if not os.path.exists(test_file) or not os.path.exists(benchmark):
-                if verbose:
+                if verbose > 0:
                     print('Skipping diff: %s does not exist.' % test_file)
             else:
                 diff_cmd = '%s %s %s' % (diff_program, benchmark, test_file)
@@ -475,15 +478,15 @@ copy_files_since: files produced since the timestamp (in seconds since the
 
 #--- info output ---
 
-def start_status(tests, running, verbose):
+def start_status(tests, running, verbose=1):
     '''Print a header containing useful information.
 
 tests: list of tests.
 running: true if tests are to be run.
-verbose: true if output is required; if false no output is produced.
+verbose: level of verbosity in output (no output if <1).
 '''
 
-    if verbose:
+    if verbose > 0:
         exes = [test.test_program.exe for test in tests]
         exes = testcode2.compatibility.compat_set(exes)
         if running:
@@ -499,8 +502,8 @@ def end_status(tests, skipped=0, verbose=1):
 
 tests: list of tests.
 skipped: number of tests skipped (ie not run or compared).
-verbose: if true additional output is produced; if false a minimal status is
-    produced containing the same amount of output.
+verbose: level of verbosity in output.  A summary footer is produced if greater
+    than 0; otherwise a minimal status line is printed out.
 '''
 
     statuses = [test.get_status() for test in tests]
