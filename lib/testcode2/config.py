@@ -270,7 +270,6 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                 # Just update existing info.
                 test = test_info[name]
                 if  'tolerances' in test_dict:
-                    print("updating tols", name)
                     test[2]['tolerances'].update(test_dict['tolerances'])
                     tol = test_dict.pop('tolerances')
                 test[0] = test_program
