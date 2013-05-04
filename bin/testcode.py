@@ -28,6 +28,7 @@ documentation for further details.'''
 import glob
 import optparse
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -264,14 +265,14 @@ tot_nprocs: total number of processors available to run tests on.  As many
     the same time.  If less than one and cluster_queue is not set, then
     tot_nprocs is ignored and the tests are run sequentially (default).
 '''
-    def run_test_worker(semaphore, semaphore_lock, test, *run_test_args):
+    def run_test_worker(semaphore, semaphore_lock, tests, *run_test_args):
         '''Launch a test after waiting until resources are available to run it.
 
 semaphore: threading.Semaphore object containing the number of cores/processors
     which can be used concurrently to run tests.
 semaphore.lock: threading.Lock object used to restrict acquiring the semaphore
     to one thread at a time.
-test: test to run.
+tests: list of (serialized) tests to run in this thread.
 run_test_args: arguments to pass to test.run_test method.
 '''
 
@@ -280,17 +281,18 @@ run_test_args: arguments to pass to test.run_test method.
         # fashion which is not perfect (we don't attempt to backfill with
         # smaller tests, for example) but is a reasonable and (most
         # importantly) simple first-order approach.
-        semaphore_lock.acquire()
-        # test.nprocs is <1 when program is run in serial.
-        nprocs_used = max(1, test.nprocs)
-        for i in range(nprocs_used):
-            semaphore.acquire()
-        semaphore_lock.release()
+        for test in tests:
+            semaphore_lock.acquire()
+            # test.nprocs is <1 when program is run in serial.
+            nprocs_used = max(1, test.nprocs)
+            for i in range(nprocs_used):
+                semaphore.acquire()
+            semaphore_lock.release()
 
-        test.run_test(*run_test_args)
+            test.run_test(*run_test_args)
 
-        for i in range(nprocs_used):
-            semaphore.release()
+            for i in range(nprocs_used):
+                semaphore.release()
 
     if tot_nprocs <= 0 and cluster_queue:
         # Running on cluster.  Default to submitting all tests at once.
@@ -304,6 +306,27 @@ run_test_args: arguments to pass to test.run_test method.
                    'the largest test: at least %d needed, %d available.'
                    % (max_test_nprocs, tot_nprocs))
             raise testcode2.exceptions.TestCodeError(err)
+
+        # Need to serialize tests that run in the same directory with wildcard
+        # patterns in the output file--otherwise we can't figure out which
+        # output file belongs to which test.  We might be able to for some
+        # wildcards, but let's err on the side of caution.
+        wildcards = re.compile('.*(\*|\?|\[.*\]).*')
+        serialized_tests = []
+        test_store = {}
+        for test in tests:
+            if test.output and wildcards.match(test.output):
+                if test.path in test_store:
+                    test_store[test.path].append(test)
+                else:
+                    test_store[test.path] = [test]
+            else:
+                serialized_tests.append([test])
+        for (key, stests) in test_store.items():
+            if (len(stests) > 1) and verbose > 2:
+                print('Warning: cannot run tests in %s concurrently.' % stests[0].path)
+        serialized_tests += test_store.values()
+
         semaphore = threading.BoundedSemaphore(tot_nprocs)
         slock = threading.Lock()
         jobs = [threading.Thread(
@@ -311,7 +334,7 @@ run_test_args: arguments to pass to test.run_test method.
                     args=(semaphore, slock, test, verbose, cluster_queue,
                           os.getcwd())
                                 )
-                    for test in tests]
+                    for test in serialized_tests]
         for job in jobs:
             job.start()
         for job in jobs:
