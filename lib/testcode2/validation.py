@@ -93,6 +93,8 @@ strict: if true, then require numbers to be within both thresholds.
             err = 'Neither absolute nor relative tolerance given.'
             raise exceptions.TestCodeError(err)
         self.strict = strict
+    def __repr__(self):
+        return (self.absolute, self.relative, self.strict).__repr__()
     def validate(self, test_val, benchmark_val, key=''):
         '''Compare test and benchmark values to within the tolerances.'''
         status = Status([True])
