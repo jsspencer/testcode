@@ -454,8 +454,7 @@ copy_files_since: files produced since the timestamp (in seconds since the
     # All tests passed?
     statuses = [test.get_status() for test in tests]
     npassed = sum(status[0] for status in statuses)
-    nwarning = sum(status[1] for status in statuses)
-    nran = sum(status[2] for status in statuses)
+    nran = sum(status[3] for status in statuses)
     if npassed != nran:
         ans = ''
         print('Not all tests passed.')
@@ -532,9 +531,10 @@ verbose: level of verbosity in output.  A summary footer is produced if greater
     statuses = [test.get_status() for test in tests]
     npassed = sum(status[0] for status in statuses)
     nwarning = sum(status[1] for status in statuses)
-    nran = sum(status[2] for status in statuses)
+    nunknown = sum(status[2] for status in statuses)
+    nran = sum(status[3] for status in statuses)
     failures = sorted(test.name for (test, status) in zip(tests, statuses)
-                      if status[0]+status[1] != status[2])
+                      if status[0]+status[1] != status[3])
     warnings = sorted(test.name for (test, status) in zip(tests, statuses)
                       if status[1] != 0)
     # Treat warnings as passes but add a note about how many warnings.
@@ -550,14 +550,16 @@ verbose: level of verbosity in output.  A summary footer is produced if greater
     else:
         test = 'tests'
 
-    if skipped != 0 and nwarning != 0:
-        add_info_msg = ' (%s %s, %s skipped)' % (nwarning, warning, skipped)
-    elif skipped != 0:
-        add_info_msg = ' (%s skipped)' % (skipped,)
-    elif nwarning != 0:
-        add_info_msg = ' (%s %s)' % (nwarning, warning)
-    else:
-        add_info_msg = ''
+    add_info_msg = []
+    if nwarning != 0:
+        add_info_msg.append('%s %s' % (nwarning, warning))
+    if nunknown != 0:
+        add_info_msg.append('%s unknown' % (nunknown,))
+    if skipped != 0:
+        add_info_msg.append('%s skipped' % (skipped,))
+    add_info_msg = ', '.join(add_info_msg)
+    if add_info_msg:
+        add_info_msg = ' (%s)' % (add_info_msg,)
 
     if verbose > 0:
         if verbose < 2:

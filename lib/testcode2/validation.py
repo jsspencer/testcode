@@ -22,16 +22,21 @@ bools: iterable of boolean objects.  If all booleans are True (False) then the
        status is set to warning (partial pass).
 status: existing status to use.  bools is ignored if status is supplied.'''
     def __init__(self, bools=None, status=None):
-        (self._pass, self._partial, self._fail) = (0, 1, 2)
+        (self._unknown, self._pass, self._partial, self._fail) = (-1, 0, 1, 2)
         if status is not None:
             self.status = status
-        else:
+        elif bools:
             if compat.compat_all(bools):
                 self.status = self._pass
             elif compat.compat_any(bools):
                 self.status = self._partial
             else:
                 self.status = self._fail
+        else:
+            self.status = self._unknown
+    def unknown(self):
+        '''Return true if stored status is unknown.'''
+        return self.status == self._unknown
     def passed(self):
         '''Return true if stored status is passed.'''
         return self.status == self._pass
@@ -45,15 +50,17 @@ status: existing status to use.  bools is ignored if status is supplied.'''
         '''Print status.
 
 msg: optional message to print out after status.
-verbose: 0: suppress all output except for . (for pass), W (for warning/partial
-            pass) and F (for fail) without a newline.
-         1: print 'Passed', 'WARNING' or '**FAILED**'.
+verbose: 0: suppress all output except for . (for pass), U (for unknown),
+            W (for warning/partial pass) and F (for fail) without a newline.
+         1: print 'Passed', 'Unknown', 'WARNING' or '**FAILED**'.
          2: as for 1 plus print msg (if supplied).
          3: as for 2 plus print a blank line.
 vspace: print out extra new line afterwards if verbose > 1.
 '''
         if verbose > 0:
-            if self.status == self._pass:
+            if self.status == self._unknown:
+                print('Unknown.')
+            elif self.status == self._pass:
                 print('Passed.')
             elif self.status == self._partial:
                 print('%s.' % ansi.ansi_format('WARNING', 'blue'))
@@ -64,7 +71,9 @@ vspace: print out extra new line afterwards if verbose > 1.
             if vspace and verbose >  1:
                 print('')
         else:
-            if self.status == self._pass:
+            if self.status == self._unknown:
+                sys.stdout.write('U')
+            elif self.status == self._pass:
                 sys.stdout.write('.')
             elif self.status == self._partial:
                 sys.stdout.write('W')
@@ -195,7 +204,7 @@ def compare_data(benchmark, test, default_tolerance, tolerances,
         msg = 'Different sets of data extracted from benchmark and test.'
     else:
         comparable = True
-        status = Status([True])
+        status = Status()
         msg = []
         # Test keys are same.
         # Compare each field (unless we're ignoring it).
