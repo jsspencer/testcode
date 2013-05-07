@@ -407,6 +407,9 @@ Assume function is executed in self.path.'''
 
 Assume function is executed in self.path.'''
         tp_ptr = self.test_program
+        if verbose > 0 and verbose < 3:
+            info_line = util.info_line(self.path, input_file, args, rundir)
+            sys.stdout.write(info_line)
         if tp_ptr.data_tag:
             # Using internal data extraction function.
             data_files = [
@@ -418,9 +421,6 @@ Assume function is executed in self.path.'''
             if verbose > 2:
                 print('Analysing output using data_tag %s in %s on files %s.' %
                         (tp_ptr.data_tag, self.path, ' and '.join(data_files)))
-            elif verbose > 0:
-                info_line = util.info_line(self.path, input_file, args, rundir)
-                sys.stdout.write(info_line)
             outputs = [util.extract_tagged_data(tp_ptr.data_tag, dfile)
                     for dfile in data_files]
         else:
@@ -435,10 +435,6 @@ Assume function is executed in self.path.'''
                     if verbose > 2:
                         print('Analysing output using %s in %s.' %
                                 (cmd, self.path))
-                    elif verbose > 0:
-                        info_line = util.info_line(self.path, input_file, args,
-                                                   rundir)
-                        sys.stdout.write(info_line)
                     extract_popen = subprocess.Popen(cmd, shell=True,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     extract_popen.wait()
