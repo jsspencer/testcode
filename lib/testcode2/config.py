@@ -100,7 +100,8 @@ config_file: location of the userconfig file, either relative or absolute.'''
 
     test_program_options = ('run_cmd_template', 'submit_template',
         'launch_parallel', 'ignore_fields', 'data_tag', 'extract_cmd_template',
-        'extract_program', 'extract_args', 'extract_fmt', 'verify', 'vcs')
+        'extract_program', 'extract_args', 'extract_fmt', 'verify', 'vcs',
+        'skip_program', 'skip_args', 'skip_cmd_template')
     default_test_options = ('inputs_args', 'output', 'nprocs')
     test_programs = {}
     for section in userconfig.sections():
@@ -144,6 +145,9 @@ config_file: location of the userconfig file, either relative or absolute.'''
         if 'extract_program' in tp_dict:
             tp_dict['extract_program'] = set_program_name(
                                 tp_dict['extract_program'], config_directory)
+        if 'skip_program' in tp_dict:
+            tp_dict['skip_program'] = set_program_name(
+                                tp_dict['skip_program'], config_directory)
         if 'submit_template' in tp_dict:
             tp_dict['submit_template'] = os.path.join(config_directory,
                                                     tp_dict['submit_template'])

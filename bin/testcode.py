@@ -350,7 +350,7 @@ tests: list of tests.
 verbose: level of verbosity in output.
 '''
 
-    nskipped = 0
+    not_checked = 0
 
     for test in tests:
         for (inp, args) in test.inputs_args:
@@ -364,13 +364,13 @@ verbose: level of verbosity in output.
             else:
                 if verbose > 0 and verbose < 2:
                     info_line = testcode2.util.info_line(test.path, inp, args, os.getcwd())
-                    print('%sSkipped.' % info_line)
+                    print('%sNot checked.' % info_line)
                 if verbose > 1:
                     print('Skipping comparison.  '
                           'Test file does not exist: %s.\n' % test_file)
-                nskipped += 1
+                not_checked += 1
 
-    return nskipped
+    return not_checked
 
 def diff_tests(tests, diff_program, verbose=1):
     '''Diff tests.
@@ -451,8 +451,8 @@ copy_files_since: files produced since the timestamp (in seconds since the
 
     # All tests passed?
     statuses = [test.get_status() for test in tests]
-    npassed = sum(status[0] for status in statuses)
-    nran = sum(status[3] for status in statuses)
+    npassed = sum(status['passed'] for status in statuses)
+    nran = sum(status['ran'] for status in statuses)
     if npassed != nran:
         ans = ''
         print('Not all tests passed.')
@@ -517,44 +517,54 @@ verbose: level of verbosity in output (no output if <1).
         print('Benchmark: %s.' % (tests[0].test_program.benchmark))
         print('')
 
-def end_status(tests, skipped=0, verbose=1):
+def end_status(tests, not_checked=0, verbose=1):
     '''Print a footer containing useful information.
 
 tests: list of tests.
-skipped: number of tests skipped (ie not run or compared).
+not_checked: number of tests not checked (ie not run or compared).
 verbose: level of verbosity in output.  A summary footer is produced if greater
     than 0; otherwise a minimal status line is printed out.
 '''
 
+    def pluralise(string, num):
+        '''Return plural form (just by adding s) to string if num > 1.'''
+        if num > 1:
+            string = string+'s'
+        return string
+
     statuses = [test.get_status() for test in tests]
-    npassed = sum(status[0] for status in statuses)
-    nwarning = sum(status[1] for status in statuses)
-    nunknown = sum(status[2] for status in statuses)
-    nran = sum(status[3] for status in statuses)
+    npassed = sum(status['passed'] for status in statuses)
+    nwarning = sum(status['warning'] for status in statuses)
+    nfailed = sum(status['failed'] for status in statuses)
+    nunknown = sum(status['unknown'] for status in statuses)
+    nskipped = sum(status['skipped'] for status in statuses)
+    nran = sum(status['ran'] for status in statuses)
     failures = sorted(test.name for (test, status) in zip(tests, statuses)
-                      if status[0]+status[1] != status[3])
+                      if status['failed'] != 0)
     warnings = sorted(test.name for (test, status) in zip(tests, statuses)
-                      if status[1] != 0)
+                      if status['warning'] != 0)
+    skipped = sorted(test.name for (test, status) in zip(tests, statuses)
+                      if status['skipped'] != 0)
     # Treat warnings as passes but add a note about how many warnings.
     npassed += nwarning
+    # Treat skipped tests as tests which weren't run.
+    nran -= nskipped
 
     # Pedantic.
-    if nwarning == 1:
-        warning = 'warning'
-    else:
-        warning = 'warnings'
-    if nran == 1:
-        test = 'test'
-    else:
-        test = 'tests'
+    warning = pluralise('warning', nwarning)
+    ran_test = pluralise('test', nran)
+    failed_test = pluralise('test', nfailed)
+    skipped_test = pluralise('test', nskipped)
 
     add_info_msg = []
     if nwarning != 0:
         add_info_msg.append('%s %s' % (nwarning, warning))
+    if nskipped != 0:
+        add_info_msg.append('%s skipped' % (nskipped,))
     if nunknown != 0:
         add_info_msg.append('%s unknown' % (nunknown,))
-    if skipped != 0:
-        add_info_msg.append('%s skipped' % (skipped,))
+    if not_checked != 0:
+        add_info_msg.append('%s not checked' % (not_checked,))
     add_info_msg = ', '.join(add_info_msg)
     if add_info_msg:
         add_info_msg = ' (%s)' % (add_info_msg,)
@@ -564,13 +574,15 @@ verbose: level of verbosity in output.  A summary footer is produced if greater
             print('') # Obsessive formatting.
         msg = 'All done.  %s%s out of %s %s passed%s.'
         if npassed == nran:
-            print(msg % ('', npassed, nran, test, add_info_msg))
+            print(msg % ('', npassed, nran, ran_test, add_info_msg))
         else:
-            print(msg % ('ERROR: only ', npassed, nran, test, add_info_msg))
+            print(msg % ('ERROR: only ', npassed, nran, ran_test, add_info_msg))
         if failures:
-            print('Failures in:\n\t%s' % '\n\t'.join(failures))
+            print('Failed %s in:\n\t%s' % (failed_test, '\n\t'.join(failures)))
         if warnings:
-            print('Warnings in:\n\t%s' % '\n\t'.join(warnings))
+            print('%s in:\n\t%s' % (warning.title(), '\n\t'.join(warnings)))
+        if skipped:
+            print('Skipped %s in:\n\t%s' % (skipped_test, '\n\t'.join(skipped)))
     else:
         print(' [%s/%s%s]'% (npassed, nran, add_info_msg))
 
@@ -612,8 +624,8 @@ args: command-line arguments passed to testcode2.
         run_tests(tests, verbose, options.queue_system, options.tot_nprocs)
         ret_val = end_status(tests, 0, verbose)
     if 'compare' in actions:
-        nskipped = compare_tests(tests, verbose)
-        ret_val = end_status(tests, nskipped, verbose)
+        not_checked = compare_tests(tests, verbose)
+        ret_val = end_status(tests, not_checked, verbose)
     if 'diff' in actions:
         diff_tests(tests, user_options['diff'], verbose)
     if 'tidy' in actions:

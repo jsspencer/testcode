@@ -70,6 +70,9 @@ class TestProgram:
         self.extract_program = None
         self.extract_args = ''
         self.extract_fmt = 'table'
+        self.skip_cmd_template = 'tc.skip tc.args tc.test'
+        self.skip_program = None
+        self.skip_args = ''
         self.verify = False
 
         # Info
@@ -138,6 +141,16 @@ class TestProgram:
             test_cmd = cmd.replace('tc.file', pipes.quote(test_file))
             bench_cmd = cmd.replace('tc.file', pipes.quote(bench_file))
             return (bench_cmd, test_cmd)
+
+    def skip_cmd(self, input_file, args):
+        '''Create skip command.'''
+        test_file = util.testcode_filename(FILESTEM['test'], self.test_id,
+                input_file, args)
+        cmd = self.skip_cmd_template
+        cmd = cmd.replace('tc.skip', pipes.quote(self.skip_program))
+        cmd = cmd.replace('tc.args', self.skip_args)
+        cmd = cmd.replace('tc.test', pipes.quote(test_file))
+        return cmd
 
 class Test:
     '''Store and execute a test.'''
@@ -244,6 +257,9 @@ class Test:
                 err = 'Test(s) in %s failed.\n%s' % (self.path, err)
             status = validation.Status([False])
             self._update_status(status, (test_input, test_arg))
+            if verbose > 0 and verbose < 3:
+                info_line = util.info_line(self.path, test_input, test_arg, rundir)
+                sys.stdout.write(info_line)
             status.print_status(err, verbose)
 
     def _start_job(self, cmd, cluster_queue=None, verbose=1):
@@ -341,12 +357,11 @@ threads.
 
 Decorated to verify_job, which acquires directory lock and enters self.path
 first, during initialisation.'''
-        if self.test_program.verify:
-            (status, msg) = self.verify_job_external(input_file, args, verbose,
-                                                     rundir)
-        else:
-            (bench_out, test_out) = self.extract_data(input_file, args, verbose,
-                                                      rundir)
+        (status, msg) = self.skip_job(input_file, args, verbose)
+        if self.test_program.verify and not status.skipped():
+            (status, msg) = self.verify_job_external(input_file, args, verbose)
+        elif not status.skipped():
+            (bench_out, test_out) = self.extract_data(input_file, args, verbose)
             (comparable, status, msg) = validation.compare_data(bench_out,
                     test_out, self.default_tolerance, self.tolerances)
             if verbose > 2:
@@ -368,11 +383,37 @@ first, during initialisation.'''
                     msg = data_table
 
         self._update_status(status, (input_file, args))
+        if verbose > 0 and verbose < 3:
+            info_line = util.info_line(self.path, input_file, args, rundir)
+            sys.stdout.write(info_line)
         status.print_status(msg, verbose)
 
         return (status, msg)
 
-    def verify_job_external(self, input_file, args, verbose=1, rundir=None):
+    def skip_job(self, input_file, args, verbose=1):
+        '''TODO
+'''
+        status = validation.Status()
+        if self.test_program.skip_program:
+            cmd = self.test_program.skip_cmd(input_file, args)
+            try:
+                if verbose > 2:
+                    print('Testing whether to skip test using %s in %s.' %
+                            (cmd, self.path))
+                skip_popen = subprocess.Popen(cmd, shell=True,
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                skip_popen.wait()
+            except OSError:
+                # slightly odd syntax in order to be compatible with python
+                # 2.5 and python 2.6/3
+                err = 'Test to skip test: %s' % (sys.exc_info()[1],)
+                raise exceptions.RunError(err)
+            if skip_popen.returncode == 0:
+                # skip this test
+                status = validation.Status(name='skipped')
+        return (status, '')
+
+    def verify_job_external(self, input_file, args, verbose=1):
         '''Run user-supplied verifier script.
 
 Assume function is executed in self.path.'''
@@ -381,9 +422,6 @@ Assume function is executed in self.path.'''
             if verbose > 2:
                 print('Analysing test using %s in %s.' %
                         (verify_cmd, self.path))
-            elif verbose > 0:
-                info_line = util.info_line(self.path, input_file, args, rundir)
-                sys.stdout.write(info_line)
             verify_popen = subprocess.Popen(verify_cmd, shell=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             verify_popen.wait()
@@ -401,14 +439,11 @@ Assume function is executed in self.path.'''
         else:
             return (validation.Status([False]), output)
 
-    def extract_data(self, input_file, args, verbose=1, rundir=None):
+    def extract_data(self, input_file, args, verbose=1):
         '''Extract data from output file.
 
 Assume function is executed in self.path.'''
         tp_ptr = self.test_program
-        if verbose > 0 and verbose < 3:
-            info_line = util.info_line(self.path, input_file, args, rundir)
-            sys.stdout.write(info_line)
         if tp_ptr.data_tag:
             # Using internal data extraction function.
             data_files = [
@@ -513,11 +548,16 @@ Assume function is executed in self.path.'''
         # If there's an object (other than None/False) in the corresponding
         # dict entry in self.status, then that test must have ran (albeit not
         # necessarily successfuly!).
-        npassed = sum(True for stat in self.status.values()
+	status = {}
+        status['passed'] = sum(True for stat in self.status.values()
                         if stat and stat.passed())
-        nwarning = sum(True for stat in self.status.values()
+        status['warning'] = sum(True for stat in self.status.values()
                         if stat and stat.warning())
-        nunknown = sum(True for stat in self.status.values()
+        status['skipped'] = sum(True for stat in self.status.values()
+                        if stat and stat.skipped())
+        status['failed'] = sum(True for stat in self.status.values()
+                        if stat and stat.failed())
+        status['unknown'] = sum(True for stat in self.status.values()
                         if stat and stat.unknown())
-        nran = sum(True for stat in self.status.values() if stat)
-        return (npassed, nwarning, nunknown, nran)
+        status['ran'] = sum(True for stat in self.status.values() if stat)
+        return status

@@ -20,32 +20,41 @@ class Status:
 bools: iterable of boolean objects.  If all booleans are True (False) then the
        status is set to pass (fail) and if only some booleans are True, the
        status is set to warning (partial pass).
-status: existing status to use.  bools is ignored if status is supplied.'''
-    def __init__(self, bools=None, status=None):
-        (self._unknown, self._pass, self._partial, self._fail) = (-1, 0, 1, 2)
-        if status is not None:
+status: existing status to use.  bools is ignored if status is supplied.
+name: name of status (unknown, skipped, passed, partial, failed) to use.
+      Setting name overrides bools and status.
+'''
+    def __init__(self, bools=None, status=None, name=None):
+        (self._unknown, self._skipped) = (-2, -1)
+        (self._passed, self._partial, self._failed) = (0, 1, 2)
+        if name is not None:
+            setattr(self, 'status', getattr(self, '_'+name))
+        elif status is not None:
             self.status = status
         elif bools:
             if compat.compat_all(bools):
-                self.status = self._pass
+                self.status = self._passed
             elif compat.compat_any(bools):
                 self.status = self._partial
             else:
-                self.status = self._fail
+                self.status = self._failed
         else:
             self.status = self._unknown
     def unknown(self):
         '''Return true if stored status is unknown.'''
         return self.status == self._unknown
+    def skipped(self):
+        '''Return true if stored status is skipped.'''
+        return self.status == self._skipped
     def passed(self):
         '''Return true if stored status is passed.'''
-        return self.status == self._pass
+        return self.status == self._passed
     def warning(self):
         '''Return true if stored status is a partial pass.'''
         return self.status == self._partial
     def failed(self):
         '''Return true if stored status is failed.'''
-        return self.status == self._fail
+        return self.status == self._failed
     def print_status(self, msg=None, verbose=1, vspace=True):
         '''Print status.
 
@@ -60,8 +69,10 @@ vspace: print out extra new line afterwards if verbose > 1.
         if verbose > 0:
             if self.status == self._unknown:
                 print('Unknown.')
-            elif self.status == self._pass:
+            elif self.status == self._passed:
                 print('Passed.')
+            elif self.status == self._skipped:
+                print('%s.' % ansi.ansi_format('SKIPPED', 'blue'))
             elif self.status == self._partial:
                 print('%s.' % ansi.ansi_format('WARNING', 'blue'))
             else:
@@ -73,7 +84,9 @@ vspace: print out extra new line afterwards if verbose > 1.
         else:
             if self.status == self._unknown:
                 sys.stdout.write('U')
-            elif self.status == self._pass:
+            elif self.status == self._skipped:
+                sys.stdout.write('S')
+            elif self.status == self._passed:
                 sys.stdout.write('.')
             elif self.status == self._partial:
                 sys.stdout.write('W')

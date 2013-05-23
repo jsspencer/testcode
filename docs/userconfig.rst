@@ -108,6 +108,26 @@ run_cmd_template [string]
     parallel, where launch_command is specified above.  The parallel version is
     only used if the number of processors to run a test on is greater than
     zero.
+skip_args [string]
+    Arguments to supply to the program to test whether to skip the comparison
+    of the test and benchmark.  Default: null string.
+skip_cmd_template [string]
+    Template of command used to test whether test was successfully run or
+    whether the comparison of the benchmark and test output should be skipped.
+    See :ref:`below <skip>` for more details.  The following strings in the
+    template are replaced:
+
+        tc.skip
+            replaced with skip_program.
+        tc.args
+            replaced with skip_args.
+        tc.test
+            replaced with the filename of the test output.
+
+    Default: tc.skip tc.args tc.test.
+skip_program [string]
+    Path to the program to test whether to skip the comparison of the test and
+    benchmark.  If null, then this test is not performed.  Default: null string.
 submit_pattern [string]
     String in the submit to be replaced by the run command.  Default:
     testcode.run_cmd.
@@ -189,3 +209,29 @@ respectively and sets the default tolerance to be non-strict except for the
 'Energy' values, which have a strict absolute and relative tolerances of
 10^-10.  If only one of the tolerances is set, then the strict and non-strict
 settings are equivalent.
+
+.. _skip:
+
+Skipping tests
+--------------
+
+Sometimes a test should not be compared to the benchmark---for example, if the
+version of the program does not support a given feature or can only be run in
+parallel.  testcode supports this by running a command to detect whether a test
+should be skipped.
+
+If the skipped program is set, then the skipped command is ran before
+extracting data from output files.  For example, if
+
+skip_program = grep
+skip_args = "is not implemented."
+
+are set, then testcode will run:
+
+.. code-block:: bash
+
+    grep "is not implemented." test_file
+
+where test_file is the test output file.  If grep returns 0 (i.e.
+test_file contains the string "is not implemented") then the test is
+marked as skipped and the test file is not compared to the benchmark.
