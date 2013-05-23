@@ -153,7 +153,6 @@ class Test:
         self.inputs_args = None
         self.output = None
         self.nprocs = 0
-        self.override_nprocs = False
         self.min_nprocs = 0
         self.max_nprocs = compat.maxint
         # Run jobs in this concurrently rather than consecutively?

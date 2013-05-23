@@ -44,10 +44,6 @@ output [string]
     against the benchmark output.  Wildcards are allowed so long as the pattern
     only matches a single file at the end of the calculation.  Default:
     inherits from setting in :ref:`userconfig`.
-override_nprocs [boolean]
-    If true then the number of processors to run the test cannot be overidden
-    by command-line options to :ref:`testcode.py`.  Useful to force certain
-    tests to be executed on a given number of processors.  Default: false.
 path [string]
     Set path (relative to the directory containing the ``jobconfig``
     configuration file) of the test.  The test is run in this directory and so

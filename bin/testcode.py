@@ -94,8 +94,6 @@ tests: list of selected tests.
     # Set number of processors...
     if nprocs >= 0:
         for test in tests:
-            if not test.override_nprocs:
-                test.nprocs = nprocs
             if test.nprocs < test.min_nprocs:
                 test.nprocs = test.min_nprocs
             if test.nprocs > test.max_nprocs:
