@@ -1,25 +1,25 @@
 #!/usr/bin/env python
-'''testcode2 [options] [action1 [action2...]]
+'''testcode [options] [action1 [action2...]]
 
-testcode2 is a simple framework for comparing output from (principally numeric)
+testcode is a simple framework for comparing output from (principally numeric)
 programs to previous output to reveal regression errors or miscompilation.
 
 Run a set of actions on a set of tests.
 
 Available actions:
-  compare               compare set of test outputs from a previous testcode2
+  compare               compare set of test outputs from a previous testcode
                         run against the benchmark outputs.
-  compare               diff set of test outputs from a previous testcode2
+  compare               diff set of test outputs from a previous testcode
                         run against the benchmark outputs.
   make-benchmarks       create a new set of benchmarks and update the userconfig
                         file with the new benchmark id.  Also runs the 'run'
                         action unless the 'compare' action is also given.
   run                   run a set of tests and compare against the benchmark
                         outputs.  Default action.
-  tidy                  Remove files from previous testcode2 runs from the test
+  tidy                  Remove files from previous testcode runs from the test
                         directories.
 
-Requires two configuration files, jobconfig and userconfig.  See testcode2
+Requires two configuration files, jobconfig and userconfig.  See testcode
 documentation for further details.'''
 
 # copyright: (c) 2012 James Spencer

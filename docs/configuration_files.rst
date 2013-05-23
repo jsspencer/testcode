@@ -24,3 +24,9 @@ Python's `configparser <http://docs.python.org/library/configparser.html>`_ modu
 
 defines an ini file with two sections (named 'section_1' and 'section_2'), each
 with two variables set.
+
+.. note::
+
+    Any paths can either be absolute or relative to the directory containing
+    the configuration file.  The full path need not be given for any program
+    which exists on the user's PATH.
