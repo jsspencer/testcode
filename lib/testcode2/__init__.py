@@ -247,6 +247,9 @@ class Test:
                         self.verify_job(test_input, test_arg, verbose, rundir)
                 else:
                     # Did one job at a time.
+                    if job.returncode != 0:
+                        err = 'Error running job.  Return code: %i'
+                        raise exceptions.RunError(err % (job.returncode))
                     (test_input, test_arg) = self.inputs_args[ind]
                     if self.output:
                         self.move_output_to_test_output(test_files[ind])
