@@ -548,7 +548,7 @@ Assume function is executed in self.path.'''
         # If there's an object (other than None/False) in the corresponding
         # dict entry in self.status, then that test must have ran (albeit not
         # necessarily successfuly!).
-	status = {}
+        status = {}
         status['passed'] = sum(True for stat in self.status.values()
                         if stat and stat.passed())
         status['warning'] = sum(True for stat in self.status.values()
