@@ -46,7 +46,7 @@ def extract_tagged_data(data_tag, filename):
     '''Extract data from lines marked by the data_tag in filename.'''
     if not os.path.exists(filename):
         err = 'Cannot extract data: file %s does not exist.' % (filename)
-        raise exceptions.RunError(err)
+        raise exceptions.AnalysisError(err)
     data_file = open(filename)
     # Data tag is the first non-space character in the line.
     # e.g. extract data from lines:
@@ -122,7 +122,7 @@ and
         else:
             if len(dline) > len(head):
                 err = 'Table missing column heading(s):\n%s' % (table_string)
-                raise exceptions.RunError(err)
+                raise exceptions.AnalysisError(err)
             for (ind, val) in enumerate(dline):
                 # Add data to appropriate key.
                 # Note that this handles the case where the same column heading

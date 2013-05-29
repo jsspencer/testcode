@@ -357,30 +357,48 @@ threads.
 
 Decorated to verify_job, which acquires directory lock and enters self.path
 first, during initialisation.'''
-        (status, msg) = self.skip_job(input_file, args, verbose)
-        if self.test_program.verify and not status.skipped():
-            (status, msg) = self.verify_job_external(input_file, args, verbose)
-        elif not status.skipped():
-            (bench_out, test_out) = self.extract_data(input_file, args, verbose)
-            (comparable, status, msg) = validation.compare_data(bench_out,
-                    test_out, self.default_tolerance, self.tolerances)
+        try:
+            (status, msg) = self.skip_job(input_file, args, verbose)
+        except exceptions.AnalysisError:
             if verbose > 2:
-                # Include data tables in output.
-                if comparable:
-                    # Combine test and benchmark dictionaries.
-                    data_table = util.pretty_print_table( ['benchmark', 'test'],
-                                                          [bench_out, test_out])
-                else:
-                    # Print dictionaries separately--couldn't even compare them!
-                    data_table = '\n'.join((
+                err = sys.exc_info()[1]
+                print(err)
+
+        msg = ''
+        try:
+            if self.test_program.verify and not status.skipped():
+                (status, msg) = self.verify_job_external(input_file, args,
+                                                         verbose)
+            elif not status.skipped():
+                (bench_out, test_out) = self.extract_data(input_file, args,
+                                                          verbose)
+                (comparable, status, msg) = validation.compare_data(bench_out,
+                        test_out, self.default_tolerance, self.tolerances)
+                if verbose > 2:
+                    # Include data tables in output.
+                    if comparable:
+                        # Combine test and benchmark dictionaries.
+                        data_table = util.pretty_print_table(
+                                ['benchmark', 'test'],
+                                [bench_out, test_out])
+                    else:
+                        # Print dictionaries separately--couldn't even compare
+                        # them!
+                        data_table = '\n'.join((
                             util.pretty_print_table(['benchmark'], [bench_out]),
                             util.pretty_print_table(['test     '], [test_out])))
-                if msg.strip():
-                    # join data table with error message from
-                    # validation.compare_data.
-                    msg = '\n'.join((msg, data_table))
-                else:
-                    msg = data_table
+                    if msg.strip():
+                        # join data table with error message from
+                        # validation.compare_data.
+                        msg = '\n'.join((msg, data_table))
+                    else:
+                        msg = data_table
+        except exceptions.AnalysisError:
+            if msg.strip():
+                msg = '%s\n%s' % (msg, sys.exc_info()[1])
+            else:
+                msg = sys.exc_info()[1]
+            status = validation.Status([False])
 
         self._update_status(status, (input_file, args))
         if verbose > 0 and verbose < 3:
@@ -407,7 +425,7 @@ first, during initialisation.'''
                 # slightly odd syntax in order to be compatible with python
                 # 2.5 and python 2.6/3
                 err = 'Test to skip test: %s' % (sys.exc_info()[1],)
-                raise exceptions.RunError(err)
+                raise exceptions.AnalysisError(err)
             if skip_popen.returncode == 0:
                 # skip this test
                 status = validation.Status(name='skipped')
@@ -428,8 +446,8 @@ Assume function is executed in self.path.'''
         except OSError:
             # slightly odd syntax in order to be compatible with python 2.5
             # and python 2.6/3
-            err = 'Execution of test failed: %s' % (sys.exc_info()[1],)
-            raise exceptions.RunError(err)
+            err = 'Analysis of test failed: %s' % (sys.exc_info()[1],)
+            raise exceptions.AnalysisError(err)
         output = verify_popen.communicate()[0].decode('utf-8')
         if verbose < 2:
             # Suppress output.  (hackhack)
@@ -476,12 +494,12 @@ Assume function is executed in self.path.'''
                     # slightly odd syntax in order to be compatible with python
                     # 2.5 and python 2.6/3
                     err = 'Analysing output failed: %s' % (sys.exc_info()[1],)
-                    raise exceptions.RunError(err)
+                    raise exceptions.AnalysisError(err)
                 # Convert data string from extract command to dictionary format.
                 if extract_popen.returncode != 0:
                     err = extract_popen.communicate()[1].decode('utf-8')
                     err = 'Analysing output failed: %s' % (err)
-                    raise exceptions.RunError(err)
+                    raise exceptions.AnalysisError(err)
                 data_string = extract_popen.communicate()[0].decode('utf-8')
                 if self.test_program.extract_fmt == 'table':
                     outputs.append(util.dict_table_string(data_string))

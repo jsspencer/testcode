@@ -22,6 +22,11 @@ class RunError(Exception):
     pass
 
 
+class AnalysisError(Exception):
+    '''Exception used for errors running test jobs.'''
+    pass
+
+
 class TestCodeError(Exception):
     '''Top level exception for testcode errors.'''
     pass
