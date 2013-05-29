@@ -264,6 +264,23 @@ class Test:
                 info_line = util.info_line(self.path, test_input, test_arg, rundir)
                 sys.stdout.write(info_line)
             status.print_status(err, verbose)
+            # Shouldn't run remaining tests after such a catastrophic failure.
+            # Mark all remaining tests as skipped so the user knows that they
+            # weren't run.
+            err = 'Previous test in %s caused a system failure.' % (self.path)
+            status = validation.Status(name='skipped')
+            for ((test_input, test_arg), stat) in self.status.items():
+                if not self.status[(test_input,test_arg)]:
+                    self._update_status(status, (test_input, test_arg))
+                    if verbose > 2:
+                        cmd = self.test_program.run_cmd(test_input, test_arg,
+                                                        self.nprocs)
+                        print('Test using %s in %s' % (cmd, self.path))
+                    elif verbose > 0:
+                        info_line = util.info_line(self.path, test_input,
+                                                   test_arg, rundir)
+                        sys.stdout.write(info_line)
+                    status.print_status(err, verbose)
 
     def _start_job(self, cmd, cluster_queue=None, verbose=1):
         '''Start test running.  Requires directory lock.
