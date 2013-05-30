@@ -9,7 +9,7 @@ Run a set of actions on a set of tests.
 Available actions:
   compare               compare set of test outputs from a previous testcode
                         run against the benchmark outputs.
-  compare               diff set of test outputs from a previous testcode
+  diff                  diff set of test outputs from a previous testcode
                         run against the benchmark outputs.
   make-benchmarks       create a new set of benchmarks and update the userconfig
                         file with the new benchmark id.  Also runs the 'run'
@@ -334,9 +334,16 @@ run_test_args: arguments to pass to test.run_test method.
                                 )
                     for test in serialized_tests]
         for job in jobs:
+            # daemonise so thread terminates when master dies
+            try:
+                job.setDaemon(True)  # first, try the old API
+            except AttributeError:
+                job.daemon = True  
             job.start()
-        for job in jobs:
-            job.join()
+
+        # We avoid .join() which is blocking making it unresponsive to TERM
+        while threading.active_count() > 1:
+            time.sleep(0.5)
     else:
         # run straight through, one at a time
         for test in tests:
