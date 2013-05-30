@@ -9,7 +9,7 @@ Run a set of actions on a set of tests.
 Available actions:
   compare               compare set of test outputs from a previous testcode
                         run against the benchmark outputs.
-  compare               diff set of test outputs from a previous testcode
+  diff                  diff set of test outputs from a previous testcode
                         run against the benchmark outputs.
   make-benchmarks       create a new set of benchmarks and update the userconfig
                         file with the new benchmark id.  Also runs the 'run'
