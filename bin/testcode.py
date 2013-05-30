@@ -334,9 +334,16 @@ run_test_args: arguments to pass to test.run_test method.
                                 )
                     for test in serialized_tests]
         for job in jobs:
+            # daemonise so thread terminates when master dies
+            try:
+                job.setDaemon(True)
+            except AttributeError:
+                job.daemon = True  
             job.start()
-        for job in jobs:
-            job.join()
+
+        # We avoid .join() which is blocking making it unresponsive to TERM
+        while threading.activeCount() > 1:
+            time.sleep(0.5)
     else:
         # run straight through, one at a time
         for test in tests:
