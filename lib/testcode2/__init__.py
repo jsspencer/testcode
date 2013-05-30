@@ -394,7 +394,7 @@ first, during initialisation.'''
                                                           verbose)
                 (comparable, status, msg) = validation.compare_data(bench_out,
                         test_out, self.default_tolerance, self.tolerances)
-                if verbose > 2:
+                if verbose > 2 or (verbose == 2 and not comparable):
                     # Include data tables in output.
                     if comparable:
                         # Combine test and benchmark dictionaries.
