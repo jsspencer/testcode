@@ -30,6 +30,11 @@ Author
 
 James Spencer, Imperial College London.
 
+Contributions and suggestions from:
+
+Keith Refson, Science and Technology Facilities Council.
+Shawn Chin, Science and Technology Facilities Council.
+
 LICENSE
 -------
 
