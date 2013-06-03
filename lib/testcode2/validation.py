@@ -204,33 +204,29 @@ strict: if true, then require numbers to be within both thresholds.
 def compare_data(benchmark, test, default_tolerance, tolerances,
         ignore_fields=None):
     '''Compare two data dictionaries.'''
-    if ignore_fields:
-        for field in ignore_fields:
-            benchmark.pop([field])
-            test.pop([field])
-    nitems = lambda data_dict: [len(val) for (key, val)
-                                                in sorted(data_dict.items())]
-    if sorted(benchmark.keys()) != sorted(test.keys()) or \
-            nitems(benchmark) != nitems(test):
-        comparable = False
+    ignored_params = compat.compat_set(ignore_fields or tuple())
+    bench_params = compat.compat_set(benchmark) - ignored_params
+    test_params = compat.compat_set(test) - ignored_params
+    comparable = (bench_params == test_params)
+    status = Status()
+    msg = []
+    
+    if not comparable:
         status = Status([False])
-        msg = 'Different sets of data extracted from benchmark and test.'
-    else:
-        comparable = True
-        status = Status()
-        msg = []
-        # Test keys are same.
-        # Compare each field (unless we're ignoring it).
-        for key in benchmark.keys():
-            if key in tolerances.keys():
-                tol = tolerances[key]
-            else:
-                tol = default_tolerance
-            for ind in range(len(benchmark[key])):
-                (key_status, err) = tol.validate(
-                        test[key][ind], benchmark[key][ind], key)
-                status += key_status
-                if not key_status.passed() and err:
-                    msg.append(err)
-        msg = '\n'.join(msg)
-    return (comparable, status, msg)
+        bench_only = bench_params - test_params
+        test_only = test_params - bench_params
+        msg.append('Different sets of data extracted from benchmark and test.')
+        if bench_only:
+            msg.append("    Data only in benchmark: %s." % ", ".join(bench_only))
+        if test_only:
+            msg.append("    Data only in test: %s." % ", ".join(test_only))
+
+    for param in (bench_params & test_params):
+        tol = tolerances.get(param, default_tolerance)
+        for bench_value, test_value in zip(benchmark[param], test[param]):
+            key_status, err = tol.validate(bench_value, test_value, param)
+            status += key_status
+            if not key_status.passed() and err:
+                msg.append(err)
+
+    return (comparable, status, "\n".join(msg))
