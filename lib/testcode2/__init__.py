@@ -393,7 +393,8 @@ first, during initialisation.'''
                 (bench_out, test_out) = self.extract_data(input_file, args,
                                                           verbose)
                 (comparable, status, msg) = validation.compare_data(bench_out,
-                        test_out, self.default_tolerance, self.tolerances)
+                        test_out, self.default_tolerance, self.tolerances,
+                        self.test_program.ignore_fields)
                 if verbose > 2:
                     # Include data tables in output.
                     if comparable:

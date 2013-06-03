@@ -111,6 +111,8 @@ config_file: location of the userconfig file, either relative or absolute.'''
         for item in test_program_options:
             if userconfig.has_option(section, item):
                 tp_dict[item] = userconfig.get(section, item)
+        if 'ignore_fields' in tp_dict:
+            tp_dict['ignore_fields'] = tp_dict['ignore_fields'].split()
         if section in executables:
             exe = executables[section]
         elif '_tc_all' in executables:
