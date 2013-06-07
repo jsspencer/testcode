@@ -33,9 +33,15 @@ James Spencer, Imperial College London.
 Contributions and suggestions from:
 
 Keith Refson, Science and Technology Facilities Council.
+
 Shawn Chin, Science and Technology Facilities Council.
 
 LICENSE
 -------
 
 Modified BSD license; see LICENSE for more details.
+
+See also
+--------
+
+`testcode_buildbot.py <https://gist.github.com/shawnchin/5678957>`_: a custom buildbot BuildStep for running testcode by Shawn Chin.
