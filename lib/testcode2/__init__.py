@@ -377,12 +377,7 @@ threads.
 
 Decorated to verify_job, which acquires directory lock and enters self.path
 first, during initialisation.'''
-        try:
-            (status, msg) = self.skip_job(input_file, args, verbose)
-        except exceptions.AnalysisError:
-            if verbose > 2:
-                err = sys.exc_info()[1]
-                print(err)
+        (status, msg) = self.skip_job(input_file, args, verbose)
 
         msg = ''
         try:
@@ -430,8 +425,9 @@ first, during initialisation.'''
         return (status, msg)
 
     def skip_job(self, input_file, args, verbose=1):
-        '''TODO
-'''
+        '''Run user-supplied command to check if test should be skipped.
+
+Assume function is executed in self.path.'''
         status = validation.Status()
         if self.test_program.skip_program:
             cmd = self.test_program.skip_cmd(input_file, args)
@@ -442,14 +438,14 @@ first, during initialisation.'''
                 skip_popen = subprocess.Popen(cmd, shell=True,
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 skip_popen.wait()
+                if skip_popen.returncode == 0:
+                    # skip this test
+                    status = validation.Status(name='skipped')
             except OSError:
                 # slightly odd syntax in order to be compatible with python
                 # 2.5 and python 2.6/3
-                err = 'Test to skip test: %s' % (sys.exc_info()[1],)
-                raise exceptions.AnalysisError(err)
-            if skip_popen.returncode == 0:
-                # skip this test
-                status = validation.Status(name='skipped')
+                if verbose > 2:
+                    print('Test to skip test: %s' % (sys.exc_info()[1],))
         return (status, '')
 
     def verify_job_external(self, input_file, args, verbose=1):
