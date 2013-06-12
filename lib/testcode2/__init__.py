@@ -199,6 +199,7 @@ class Test:
         self.move_old_output_files = DIR_LOCK.in_dir(self.path)(
                                                self._move_old_output_files)
         self.verify_job = DIR_LOCK.in_dir(self.path)(self._verify_job)
+        self.skip_job = DIR_LOCK.in_dir(self.path)(self._skip_job)
 
     def run_test(self, verbose=1, cluster_queue=None, rundir=None):
         '''Run all jobs in test.'''
@@ -247,13 +248,30 @@ class Test:
                         self.verify_job(test_input, test_arg, verbose, rundir)
                 else:
                     # Did one job at a time.
+                    err = []
                     if job.returncode != 0:
-                        err = 'Error running job.  Return code: %i'
-                        raise exceptions.RunError(err % (job.returncode))
+                        err.append('Error running job.  Return code: %i'
+                                        % job.returncode)
                     (test_input, test_arg) = self.inputs_args[ind]
                     if self.output:
-                        self.move_output_to_test_output(test_files[ind])
-                    self.verify_job(test_input, test_arg, verbose, rundir)
+                        try:
+                            self.move_output_to_test_output(test_files[ind])
+                        except exceptions.RunError:
+                            err.append(sys.exc_info()[1])
+                    (status, msg) = self.skip_job(test_input, test_arg, verbose)
+                    if status.skipped():
+                        self._update_status(status, (test_input, test_arg))
+                        if verbose > 0 and verbose < 3:
+                            sys.stdout.write(
+                                    util.info_line(self.path,
+                                                   test_input, test_arg, rundir)
+                                            )
+                        status.print_status(msg, verbose)
+                    else:
+                        if err:
+                            # re-raise first error we hit.
+                            raise exceptions.RunError(err[0])
+                        self.verify_job(test_input, test_arg, verbose, rundir)
         except exceptions.RunError:
             err = sys.exc_info()[1]
             if verbose > 2:
@@ -377,14 +395,12 @@ threads.
 
 Decorated to verify_job, which acquires directory lock and enters self.path
 first, during initialisation.'''
-        (status, msg) = self.skip_job(input_file, args, verbose)
-
         msg = ''
         try:
-            if self.test_program.verify and not status.skipped():
+            if self.test_program.verify:
                 (status, msg) = self.verify_job_external(input_file, args,
                                                          verbose)
-            elif not status.skipped():
+            else:
                 (bench_out, test_out) = self.extract_data(input_file, args,
                                                           verbose)
                 (comparable, status, msg) = validation.compare_data(bench_out,
@@ -424,10 +440,14 @@ first, during initialisation.'''
 
         return (status, msg)
 
-    def skip_job(self, input_file, args, verbose=1):
+    def _skip_job(self, input_file, args, verbose=1):
         '''Run user-supplied command to check if test should be skipped.
 
-Assume function is executed in self.path.'''
+IMPORTANT: use self.skip_job rather than self._skip_job if using multiple
+threads.
+
+Decorated to skip_job, which acquires directory lock and enters self.path
+first, during initialisation.'''
         status = validation.Status()
         if self.test_program.skip_program:
             cmd = self.test_program.skip_cmd(input_file, args)
