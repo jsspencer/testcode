@@ -248,17 +248,19 @@ class Test:
                         self.verify_job(test_input, test_arg, verbose, rundir)
                 else:
                     # Did one job at a time.
-                    err = []
-                    if job.returncode != 0:
-                        err.append('Error running job.  Return code: %i'
-                                        % job.returncode)
                     (test_input, test_arg) = self.inputs_args[ind]
+                    err = []
                     if self.output:
                         try:
                             self.move_output_to_test_output(test_files[ind])
                         except exceptions.RunError:
                             err.append(sys.exc_info()[1])
-                    (status, msg) = self.skip_job(test_input, test_arg, verbose)
+                    status = validation.Status()
+                    if job.returncode != 0:
+                        err.insert(0, 'Error running job.  Return code: %i'
+                                        % job.returncode)
+                        (status, msg) = self.skip_job(test_input, test_arg,
+                                                      verbose)
                     if status.skipped():
                         self._update_status(status, (test_input, test_arg))
                         if verbose > 0 and verbose < 3:
@@ -267,10 +269,10 @@ class Test:
                                                    test_input, test_arg, rundir)
                                             )
                         status.print_status(msg, verbose)
+                    elif err:
+                        # re-raise first error we hit.
+                        raise exceptions.RunError(err[0])
                     else:
-                        if err:
-                            # re-raise first error we hit.
-                            raise exceptions.RunError(err[0])
                         self.verify_job(test_input, test_arg, verbose, rundir)
         except exceptions.RunError:
             err = sys.exc_info()[1]
@@ -395,12 +397,13 @@ threads.
 
 Decorated to verify_job, which acquires directory lock and enters self.path
 first, during initialisation.'''
-        msg = ''
+        # We already have DIR_LOCK, so use _skip_job instead of skip_job.
+        (status, msg) = self._skip_job(input_file, args, verbose)
         try:
-            if self.test_program.verify:
+            if self.test_program.verify and not status.skipped():
                 (status, msg) = self.verify_job_external(input_file, args,
                                                          verbose)
-            else:
+            elif not status.skipped():
                 (bench_out, test_out) = self.extract_data(input_file, args,
                                                           verbose)
                 (comparable, status, msg) = validation.compare_data(bench_out,
