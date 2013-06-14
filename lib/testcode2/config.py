@@ -222,14 +222,14 @@ config_file: location of the jobconfig file, either relative or absolute.'''
         if jobconfig.has_option(section, 'path'):
             path = os.path.join(config_directory,
                                 jobconfig.get(section, 'path'))
-            jobconfig.remove_option('path')
+            jobconfig.remove_option(section, 'path')
             globbed_tests = [(section, test_path)
                                             for test_path in glob.glob(path)]
         else:
             path = os.path.join(config_directory, section)
             globbed_tests = [(test_path, test_path)
                                             for test_path in glob.glob(path)]
-            test_sections.append((section, globbed_tests))
+        test_sections.append((section, globbed_tests))
     test_sections.sort(key=lambda sec_info: len(sec_info[1]), reverse=True)
     test_info = {}
     for (section, globbed_tests) in test_sections:
