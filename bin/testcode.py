@@ -540,6 +540,25 @@ verbose: level of verbosity in output.  A summary footer is produced if greater
             string = string+'s'
         return string
 
+    def select_tests(stat_key, tests, statuses):
+        '''Select a subset of tests.
+
+        (test.name, test.path) is included if the test object contains at least
+        one test of the desired status (stat_key).'''
+        test_subset = [(test.name, test.path) for (test, status)
+                               in zip(tests, statuses) if status[stat_key] != 0]
+        return sorted(test_subset)
+
+    def format_test_subset(subset):
+        '''Format each entry in the list returned by select_tests.'''
+        subset_fmt = []
+        for (name, path) in subset:
+            if os.path.abspath(name) == os.path.abspath(path):
+                subset_fmt.append(name)
+            else:
+                subset_fmt.append('%s (test name: %s)' % (path, name))
+        return subset_fmt
+
     statuses = [test.get_status() for test in tests]
     npassed = sum(status['passed'] for status in statuses)
     nwarning = sum(status['warning'] for status in statuses)
@@ -547,12 +566,9 @@ verbose: level of verbosity in output.  A summary footer is produced if greater
     nunknown = sum(status['unknown'] for status in statuses)
     nskipped = sum(status['skipped'] for status in statuses)
     nran = sum(status['ran'] for status in statuses)
-    failures = sorted(test.name for (test, status) in zip(tests, statuses)
-                      if status['failed'] != 0)
-    warnings = sorted(test.name for (test, status) in zip(tests, statuses)
-                      if status['warning'] != 0)
-    skipped = sorted(test.name for (test, status) in zip(tests, statuses)
-                      if status['skipped'] != 0)
+    failures = format_test_subset(select_tests('failed', tests, statuses))
+    warnings = format_test_subset(select_tests('warning', tests, statuses))
+    skipped = format_test_subset(select_tests('skipped', tests, statuses))
     # Treat warnings as passes but add a note about how many warnings.
     npassed += nwarning
     # Treat skipped tests as tests which weren't run.
