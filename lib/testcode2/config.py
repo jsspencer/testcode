@@ -223,11 +223,11 @@ config_file: location of the jobconfig file, either relative or absolute.'''
             path = os.path.join(config_directory,
                                 jobconfig.get(section, 'path'))
             jobconfig.remove_option(section, 'path')
-            globbed_tests = [(section, test_path)
+            globbed_tests = [(section, os.path.abspath(test_path))
                                             for test_path in glob.glob(path)]
         else:
             path = os.path.join(config_directory, section)
-            globbed_tests = [(test_path, test_path)
+            globbed_tests = [(test_path, os.path.abspath(test_path))
                                             for test_path in glob.glob(path)]
         test_sections.append((section, globbed_tests))
     test_sections.sort(key=lambda sec_info: len(sec_info[1]), reverse=True)
@@ -272,9 +272,9 @@ config_file: location of the jobconfig file, either relative or absolute.'''
             # This means we can't just use test_dict to update the relevant
             # dictionary in test_info.
             tol = None
-            if name in test_info:
+            if path in test_info:
                 # Just update existing info.
-                test = test_info[name]
+                test = test_info[path]
                 if  'tolerances' in test_dict:
                     test[2]['tolerances'].update(test_dict['tolerances'])
                     tol = test_dict.pop('tolerances')
@@ -305,11 +305,11 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                 # restore tolerances for next test in the glob.
                 if tol:
                     test_dict['tolerances'] = tol
-                test_info[name] = [test_program, path, copy.deepcopy(test)]
+                test_info[path] = [test_program, name, copy.deepcopy(test)]
 
     # Now create the tests (after finding out what the input files are).
     tests = []
-    for (name, (test_program, path, test_dict)) in test_info.items():
+    for (path, (test_program, name, test_dict)) in test_info.items():
         old_dir = os.getcwd()
         os.chdir(path)
         # Expand any globs in the input files.
