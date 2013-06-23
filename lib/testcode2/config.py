@@ -78,7 +78,7 @@ config_file: location of the userconfig file, either relative or absolute.'''
                 userconfig.set(section_key, option_key, value)
 
     # Sensible defaults for the user options.
-    user_options = dict(benchfile=None, date_fmt='%d%m%Y',
+    user_options = dict(benchmark=None, date_fmt='%d%m%Y',
             tolerance='(1.e-10,None)', output_files=None, diff='diff')
 
     if userconfig.has_section('user'):
