@@ -29,4 +29,4 @@ with two variables set.
 
     Any paths can either be absolute or relative to the directory containing
     the configuration file.  The full path need not be given for any program
-    which exists on the user's PATH.
+    which exists on the user's PATH.  Environment variables in **program** names will be expanded.

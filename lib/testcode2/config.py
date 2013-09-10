@@ -453,6 +453,7 @@ Otherwise, assume program is given relative to relative_path and hence return
 the full path.
 '''
     program_path = os.path.join(relative_path, program)
+    program_path = os.path.expandvars(program_path)
     if not os.path.exists(program_path):
         # Program not supplied as a relative or full path.
         # Does program exist on the user's path?
