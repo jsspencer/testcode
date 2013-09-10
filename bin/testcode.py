@@ -370,7 +370,7 @@ verbose: level of verbosity in output.
             if os.path.exists(test_file):
                 test.verify_job(inp, args, verbose, os.getcwd())
             else:
-                if verbose > 0 and verbose < 2:
+                if verbose > 0 and verbose <= 2:
                     info_line = testcode2.util.info_line(test.path, inp, args, os.getcwd())
                     print('%sNot checked.' % info_line)
                 if verbose > 1:
