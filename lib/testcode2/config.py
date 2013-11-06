@@ -98,11 +98,12 @@ config_file: location of the userconfig file, either relative or absolute.'''
                 'No job types specified in userconfig.'
                                       )
 
-    test_program_options = ('run_cmd_template', 'submit_template',
+    test_program_options = ('run_cmd_template',
         'launch_parallel', 'ignore_fields', 'data_tag', 'extract_cmd_template',
         'extract_program', 'extract_args', 'extract_fmt', 'verify', 'vcs',
         'skip_program', 'skip_args', 'skip_cmd_template')
-    default_test_options = ('inputs_args', 'output', 'nprocs')
+    default_test_options = ('inputs_args', 'output', 'nprocs',
+        'min_nprocs', 'max_nprocs', 'submit_template',)
     test_programs = {}
     for section in userconfig.sections():
         tp_dict = {}
@@ -150,9 +151,9 @@ config_file: location of the userconfig file, either relative or absolute.'''
         if 'skip_program' in tp_dict:
             tp_dict['skip_program'] = set_program_name(
                                 tp_dict['skip_program'], config_directory)
-        if 'submit_template' in tp_dict:
-            tp_dict['submit_template'] = os.path.join(config_directory,
-                                                    tp_dict['submit_template'])
+        if 'submit_template' in test_dict:
+            test_dict['submit_template'] = os.path.join(config_directory,
+                                                   test_dict['submit_template'])
         for key in ('nprocs', 'max_nprocs', 'min_nprocs'):
             if key in test_dict:
                 test_dict[key] = int(test_dict[key])
@@ -266,6 +267,9 @@ config_file: location of the jobconfig file, either relative or absolute.'''
         for key in ('nprocs', 'max_nprocs', 'min_nprocs'):
             if key in test_dict:
                 test_dict[key] = int(test_dict[key])
+        if 'submit_template' in test_dict:
+            test_dict['submit_template'] = os.path.join(config_directory,
+                                                   test_dict['submit_template'])
         for (name, path) in globbed_tests:
             # Need to take care with tolerances: want to *update* existing
             # tolerance dictionary rather than overwrite it.
@@ -297,6 +301,7 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                         min_nprocs=default_test.min_nprocs,
                         max_nprocs=default_test.max_nprocs,
                         run_concurrent=default_test.run_concurrent,
+                        submit_template=default_test.submit_template,
                     )
                 if  'tolerances' in test_dict:
                     test['tolerances'].update(test_dict['tolerances'])

@@ -129,14 +129,8 @@ skip_program [string]
     Path to the program to test whether to skip the comparison of the test and
     benchmark.  If null, then this test is not performed.  Default: null string.
 submit_pattern [string]
-    String in the submit to be replaced by the run command.  Default:
+    String in the submit template to be replaced by the run command.  Default:
     testcode.run_cmd.
-submit_template [string]
-    Path to a template of a submit script used to submit jobs to a queueing
-    system.  testcode will replace the string given in submit_pattern with the
-    command(s) to run the test.  The submit script must do all other actions (e.g.
-    setting environment variables, loading modules, copying files from the test
-    directory to a local disk and copying files back afterwards).  No default.
 tolerance [tolerance format (see :ref:`below <tolerance>`.)]
     Default tolerance for tests of this type.  Default: inherits from
     [user].
@@ -164,6 +158,7 @@ for all tests of this type:
 * max_nprocs (default: 2^31-1 or 2^63-1)
 * output (no default)
 * run_concurrent (defailt: false)
+* submit_template
  
 See :ref:`jobconfig` for more details.
 

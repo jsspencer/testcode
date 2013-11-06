@@ -56,7 +56,6 @@ class TestProgram:
         self.run_cmd_template = ('tc.program tc.args tc.input > '
                                                     'tc.output 2> tc.error')
         self.launch_parallel = 'mpirun -np tc.nprocs'
-        self.submit_template = None
         self.submit_pattern = 'testcode.run_cmd'
 
         # dummy job with default settings (e.g tolerance)
@@ -168,6 +167,7 @@ class Test:
         self.nprocs = 0
         self.min_nprocs = 0
         self.max_nprocs = compat.maxint
+        self.submit_template = None
         # Run jobs in this concurrently rather than consecutively?
         # Only used when setting tests up in testcode2.config: if true then
         # each pair of input file and arguments are assigned to a different
@@ -313,14 +313,14 @@ first, during initialisation.'''
 
         if cluster_queue:
             tp_ptr = self.test_program
-            submit_file = '%s.%s' % (os.path.basename(tp_ptr.submit_template),
+            submit_file = '%s.%s' % (os.path.basename(self.submit_template),
                                                                 tp_ptr.test_id)
             job = queues.ClusterQueueJob(submit_file, system=cluster_queue)
             job.create_submit_file(tp_ptr.submit_pattern, cmd,
-                                   tp_ptr.submit_template)
+                                   self.submit_template)
             if verbose > 2:
                 print('Submitting tests using %s (template submit file) in %s'
-                           % (tp_ptr.submit_template, self.path))
+                           % (self.submit_template, self.path))
             job.start_job()
         else:
             # Run locally via subprocess.
