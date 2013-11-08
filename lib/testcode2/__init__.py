@@ -36,6 +36,7 @@ _FILESTEM_TUPLE = (
                     ('error', 'test.err'),
                     ('benchmark', 'benchmark.out'),
                   )
+_FILESTEM_DICT = dict( _FILESTEM_TUPLE )
 # We can change FILESTEM if needed.
 # However, this should only be done to compare two sets of test output or two
 # sets of benchmarks.
@@ -570,7 +571,7 @@ Assume function is executed in self.path.'''
                     self.test_program.test_id, inp, arg)
             err_file = util.testcode_filename(FILESTEM['error'],
                     self.test_program.test_id, inp, arg)
-            bench_file = util.testcode_filename(FILESTEM['benchmark'],
+            bench_file = util.testcode_filename(_FILESTEM_DICT['benchmark'],
                     benchmark, inp, arg)
             test_files.extend((test_file, err_file, bench_file))
             shutil.copy(test_file, bench_file)
