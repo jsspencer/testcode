@@ -32,7 +32,7 @@ Actions
 compare
     compare set of test outputs from a previous testcode run against the
     benchmark outputs.
-compare
+diff
     diff set of test outputs from a previous testcode run against the benchmark
     outputs.
 make-benchmarks
