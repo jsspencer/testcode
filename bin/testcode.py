@@ -677,4 +677,9 @@ args: command-line arguments passed to testcode2.
 
 if __name__ == '__main__':
 
-    sys.exit(main(sys.argv[1:]))
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except testcode2.exceptions.TestCodeError:
+        err = sys.exc_info()[1]
+        print(err)
+        sys.exit(1)
