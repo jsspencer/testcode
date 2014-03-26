@@ -14,6 +14,7 @@ Available actions:
   make-benchmarks       create a new set of benchmarks and update the userconfig
                         file with the new benchmark id.  Also runs the 'run'
                         action unless the 'compare' action is also given.
+  recheck               compare a set of test outputs and rerun failed tests.
   run                   run a set of tests and compare against the benchmark
                         outputs.  Default action.
   tidy                  Remove files from previous testcode runs from the test
@@ -48,6 +49,7 @@ import testcode2.config
 import testcode2.util
 import testcode2.compatibility
 import testcode2.exceptions
+import testcode2.validation
 
 #--- testcode initialisation ---
 
@@ -145,7 +147,8 @@ actions: list of testcode2 actions to run.
     # Curse not being able to use argparse in order to support python <= 2.7!
     parser = optparse.OptionParser(usage=__doc__)
 
-    allowed_actions = ['compare', 'run', 'diff', 'tidy', 'make-benchmarks']
+    allowed_actions = ['compare', 'run', 'diff', 'tidy', 'make-benchmarks',
+                       'recheck']
 
     parser.add_option('-b', '--benchmark', help='Set the file ID of the '
             'benchmark files.  Default: specified in the [user] section of the '
@@ -175,8 +178,8 @@ actions: list of testcode2 actions to run.
             dest='nprocs', help='Set the number of processors to run each test '
             'on.  Default: use settings in configuration files.')
     parser.add_option('-q', '--quiet', action='store_const', const=0, 
-            dest='verbose', default=True, 
-            help='Print only minimal output.  Default: False.')
+            dest='verbose', default=1, help='Print only minimal output.  '
+            'Default: False.')
     parser.add_option('-s', '--submit', dest='queue_system', default=None,
             help='Submit tests to a queueing system of the specified type.  '
             'Only PBS system is currently implemented.  Default: %default.')
@@ -305,6 +308,15 @@ run_test_args: arguments to pass to test.run_test method.
             for i in range(nprocs_used):
                 semaphore.release()
 
+    # Check executables actually exist...
+    compat = testcode2.compatibility
+    executables = [test.test_program.exe for test in tests]
+    executables = compat.compat_set(executables)
+    for exe in executables:
+        if not os.path.exists(exe):
+            err = 'Executable does not exist: %s.' % (exe)
+            raise testcode2.exceptions.TestCodeError(err)
+
     if tot_nprocs <= 0 and cluster_queue:
         # Running on cluster.  Default to submitting all tests at once.
         tot_nprocs = sum(test.nprocs for test in tests)
@@ -368,6 +380,10 @@ def compare_tests(tests, verbose=1):
 
 tests: list of tests.
 verbose: level of verbosity in output.
+
+Returns:
+
+number of tests not checked due to test output file not existing.
 '''
 
     not_checked = 0
@@ -389,6 +405,54 @@ verbose: level of verbosity in output.
                     print('Skipping comparison.  '
                           'Test file does not exist: %s.\n' % test_file)
                 not_checked += 1
+
+    return not_checked
+
+def recheck_tests(tests, verbose=1, cluster_queue=None, tot_nprocs=0):
+    '''Check tests and re-run any failed/skipped tests.
+
+tests: list of tests.
+verbose: level of verbosity in output.
+cluster_queue: name of cluster system to use.  If None, tests are run locally.
+    Currently only PBS is implemented.
+tot_nprocs: total number of processors available to run tests on.  As many
+    tests (in a LIFO fashion from the tests list) are run at the same time as
+    possible without using more processors than this value.  If less than 1 and
+    cluster_queue is specified, then all tests are submitted to the cluster at
+    the same time.  If less than one and cluster_queue is not set, then
+    tot_nprocs is ignored and the tests are run sequentially (default).
+
+Returns:
+
+not_checked: number of tests not checked due to missing test output.
+'''
+
+    if verbose == 0:
+        sep = ' '
+    else:
+        sep = '\n\n'
+
+    sys.stdout.write('Comparing tests to benchmarks:'+sep)
+
+    not_checked = compare_tests(tests, verbose)
+    end_status(tests, not_checked, verbose, False)
+
+    rerun_tests = []
+    skip = testcode2.validation.Status(name='skipped')
+    for test in tests:
+        stat = test.get_status()
+        if sum(stat[key] for key in ('failed', 'unknown')) != 0:
+            rerun_tests.append(test)
+        elif stat['ran'] != 0:
+            # mark tests as skipped using an internal API (naughty!)
+            for inp_arg in test.inputs_args:
+                test._update_status(skip, inp_arg)
+
+    if verbose > 0:
+        print('')
+    if rerun_tests:
+        sys.stdout.write('Rerunning failed tests:'+sep)
+        run_tests(rerun_tests, verbose, cluster_queue, tot_nprocs)
 
     return not_checked
 
@@ -537,13 +601,14 @@ verbose: level of verbosity in output (no output if <1).
         print('Benchmark: %s.' % (tests[0].test_program.benchmark))
         print('')
 
-def end_status(tests, not_checked=0, verbose=1):
+def end_status(tests, not_checked=0, verbose=1, final=True):
     '''Print a footer containing useful information.
 
 tests: list of tests.
 not_checked: number of tests not checked (ie not run or compared).
 verbose: level of verbosity in output.  A summary footer is produced if greater
     than 0; otherwise a minimal status line is printed out.
+final: final call (so print a goodbye messge).
 '''
 
     def pluralise(string, num):
@@ -605,10 +670,14 @@ verbose: level of verbosity in output.  A summary footer is produced if greater
     if add_info_msg:
         add_info_msg = ' (%s)' % (add_info_msg,)
 
-    if verbose > 0:
+    if nran == 0:
+        print('No tests to run.')
+    elif verbose > 0:
         if verbose < 2:
             print('') # Obsessive formatting.
-        msg = 'All done.  %s%s out of %s %s passed%s.'
+        msg = '%s%s out of %s %s passed%s.'
+        if final:
+            msg = 'All done. %s' % (msg,)
         if npassed == nran:
             print(msg % ('', npassed, nran, ran_test, add_info_msg))
         else:
@@ -644,8 +713,9 @@ args: command-line arguments passed to testcode2.
     # Shortcut names to options used multiple times.
     verbose = options.verbose
     userconfig = options.userconfig
-    reuse_id = ( ('compare' in actions or 'diff' in actions)
-                 and not 'run' in actions )
+    reuse_id = 'run' not in actions and testcode2.compatibility.compat_any(
+                [action in actions for action in ['compare', 'diff', 'recheck']]
+                )
 
     (user_options, test_programs, tests) = init_tests(userconfig,
             options.jobconfig, options.test_id, reuse_id,
@@ -659,6 +729,10 @@ args: command-line arguments passed to testcode2.
     if 'run' in actions:
         run_tests(tests, verbose, options.queue_system, options.tot_nprocs)
         ret_val = end_status(tests, 0, verbose)
+    if 'recheck' in actions:
+        not_checked = recheck_tests(tests, verbose,
+                                        options.queue_system,options.tot_nprocs)
+        ret_val = end_status(tests, not_checked, verbose)
     if 'compare' in actions:
         not_checked = compare_tests(tests, verbose)
         ret_val = end_status(tests, not_checked, verbose)
