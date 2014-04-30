@@ -224,7 +224,7 @@ def compare_data(benchmark, test, default_tolerance, tolerances,
     for param in (bench_params & test_params):
         tol = tolerances.get(param, default_tolerance)
         for bench_value, test_value in zip(benchmark[param], test[param]):
-            key_status, err = tol.validate(bench_value, test_value, param)
+            key_status, err = tol.validate(test_value, bench_value, param)
             status += key_status
             if not key_status.passed() and err:
                 msg.append(err)
