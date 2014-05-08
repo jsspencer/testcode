@@ -209,7 +209,6 @@ class Test:
             # Construct tests.
             test_cmds = []
             test_files = []
-            bench_files = []
             for (test_input, test_arg) in self.inputs_args:
                 if (test_input and
                         not os.path.exists(os.path.join(self.path,test_input))):
@@ -219,8 +218,6 @@ class Test:
                                                            self.nprocs))
                 test_files.append(util.testcode_filename(FILESTEM['test'],
                         self.test_program.test_id, test_input, test_arg))
-                bench_files.append(util.testcode_filename(FILESTEM['benchmark'],
-                    self.test_program.test_id, test_input, test_arg))
 
             # Move files matching output pattern out of the way.
             self.move_old_output_files(verbose)
