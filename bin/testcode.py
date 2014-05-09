@@ -94,7 +94,7 @@ tests: list of selected tests.
     # Set benchmark if required.
     if benchmark:
         for key in test_programs:
-            test_programs[key].benchmark = benchmark
+            test_programs[key].benchmark = [benchmark]
 
     try:
         (tests, test_categories) = testcode2.config.parse_jobconfig(
@@ -598,7 +598,11 @@ verbose: level of verbosity in output (no output if <1).
                 print('Using executable: %s.' % (exe))
         # All tests use the same test_id and benchmark.
         print('Test id: %s.' % (tests[0].test_program.test_id))
-        print('Benchmark: %s.' % (tests[0].test_program.benchmark))
+        if len(tests[0].test_program.benchmark) > 1:
+            benchmark_ids = ', '.join(tests[0].test_program.benchmark)
+            print('Benchmarks: %s.' % (benchmark_ids))
+        else:
+            print('Benchmark: %s.' % (tests[0].test_program.benchmark[0]))
         print('')
 
 def end_status(tests, not_checked=0, verbose=1, final=True):

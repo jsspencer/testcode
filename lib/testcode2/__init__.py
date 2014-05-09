@@ -121,12 +121,11 @@ class TestProgram:
         cmd = cmd.replace('tc.nprocs', str(nprocs))
         return cmd
 
-    def extract_cmd(self, input_file, args):
+    def extract_cmd(self, path, input_file, args):
         '''Create extraction command(s).'''
         test_file = util.testcode_filename(FILESTEM['test'], self.test_id,
                 input_file, args)
-        bench_file = util.testcode_filename(FILESTEM['benchmark'],
-                self.benchmark, input_file, args)
+        bench_file = self.select_benchmark_file(path, input_file, args)
         cmd = self.extract_cmd_template
         cmd = cmd.replace('tc.extract', pipes.quote(self.extract_program))
         cmd = cmd.replace('tc.args', self.extract_args)
@@ -151,6 +150,23 @@ class TestProgram:
         cmd = cmd.replace('tc.args', self.skip_args)
         cmd = cmd.replace('tc.test', pipes.quote(test_file))
         return cmd
+
+    def select_benchmark_file(self, path, input_file, args):
+        '''Find the first benchmark file out of all benchmark IDs which exists.'''
+
+        benchmark = None
+        benchmarks = []
+        for bench_id in self.benchmark:
+            benchfile = util.testcode_filename(FILESTEM['benchmark'], bench_id,
+                    input_file, args)
+            benchmarks.append(benchfile)
+            if os.path.exists(os.path.join(path, benchfile)):
+                benchmark = benchfile
+                break
+        if not benchmark:
+            err = 'No benchmark found in %s.  Checked for: %s.'
+            raise exceptions.TestCodeError(err % (path, ', '.join(benchmarks)))
+        return benchmark
 
 class Test:
     '''Store and execute a test.'''
@@ -209,7 +225,6 @@ class Test:
             # Construct tests.
             test_cmds = []
             test_files = []
-            bench_files = []
             for (test_input, test_arg) in self.inputs_args:
                 if (test_input and
                         not os.path.exists(os.path.join(self.path,test_input))):
@@ -219,8 +234,6 @@ class Test:
                                                            self.nprocs))
                 test_files.append(util.testcode_filename(FILESTEM['test'],
                         self.test_program.test_id, test_input, test_arg))
-                bench_files.append(util.testcode_filename(FILESTEM['benchmark'],
-                    self.test_program.test_id, test_input, test_arg))
 
             # Move files matching output pattern out of the way.
             self.move_old_output_files(verbose)
@@ -429,7 +442,7 @@ first, during initialisation.'''
                         msg = '\n'.join((msg, data_table))
                     else:
                         msg = data_table
-        except exceptions.AnalysisError:
+        except (exceptions.AnalysisError, exceptions.TestCodeError):
             if msg.strip():
                 msg = '%s\n%s' % (msg, sys.exc_info()[1])
             else:
@@ -476,7 +489,7 @@ first, during initialisation.'''
         '''Run user-supplied verifier script.
 
 Assume function is executed in self.path.'''
-        verify_cmd = self.test_program.extract_cmd(input_file, args)[0]
+        verify_cmd, = self.test_program.extract_cmd(self.path, input_file, args)
         try:
             if verbose > 2:
                 print('Analysing test using %s in %s.' %
@@ -506,8 +519,7 @@ Assume function is executed in self.path.'''
         if tp_ptr.data_tag:
             # Using internal data extraction function.
             data_files = [
-                    util.testcode_filename(FILESTEM['benchmark'],
-                            tp_ptr.benchmark, input_file, args),
+                    tp_ptr.select_benchmark_file(self.path, input_file, args),
                     util.testcode_filename(FILESTEM['test'],
                             tp_ptr.test_id, input_file, args),
                          ]
@@ -519,7 +531,7 @@ Assume function is executed in self.path.'''
         else:
             # Using external data extraction script.
             # Get extraction commands.
-            extract_cmds = self.test_program.extract_cmd(input_file, args)
+            extract_cmds = tp_ptr.extract_cmd(self.path, input_file, args)
 
             # Extract data.
             outputs = []

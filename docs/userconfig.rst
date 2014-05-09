@@ -24,6 +24,10 @@ benchmark [string]
 
     The format of the benchmark files is'benchmark.out.ID.inp=INPUT_FILE.arg=ARGS'.  
     The 'inp' and/or 'arg' section is not included if it is empty.
+
+    Multiple benchmarks can be used by providing a space-separated list of IDs.  The first
+    ID in the list which corresponds to an existing benchmark filename is used to
+    validate the test.
 date_fmt [string]
     Format of the date string used to uniquely label test outputs.  This must
     be a valid date format string (see `Python documenation

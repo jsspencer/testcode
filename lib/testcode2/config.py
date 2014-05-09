@@ -88,6 +88,8 @@ config_file: location of the userconfig file, either relative or absolute.'''
                 (parse_tolerance_tuple(item)
                      for item in eval_nested_tuple(user_options['tolerance']))
                                         )
+        if user_options['benchmark']:
+            user_options['benchmark'] = user_options['benchmark'].split()
     else:
         raise exceptions.TestCodeError(
                 'user section in userconfig does not exist.'
