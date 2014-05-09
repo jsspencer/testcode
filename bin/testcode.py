@@ -488,20 +488,16 @@ verbose: level of verbosity in output.
                 diff_popen.wait()
         os.chdir(cwd)
 
-def tidy_tests(tests, ndays, submit_templates=None):
+def tidy_tests(tests, ndays):
     '''Tidy up test directories.
 
 tests: list of tests.
 ndays: test files older than ndays are deleted.
-submit_templates: list of submit templates used in submitting tests to
-    a cluster.  The submit files created from the templates are also deleted.
 '''
 
     epoch_time = time.time() - 86400*ndays
 
     test_globs = ['test.out*','test.err*']
-    if submit_templates:
-        test_globs.extend(['%s*' % tmpl for tmpl in submit_templates])
 
     print(
             'Delete all %s files older than %s days from each job directory?'
@@ -517,8 +513,12 @@ submit_templates: list of submit templates used in submitting tests to
         for test in tests:
             cwd = os.getcwd()
             os.chdir(test.path)
-            for test_glob in test_globs:
-                for test_file in glob.glob(test_glob):
+            if test.submit_template:
+                file_globs = test_globs + [test.submit_template]
+            else:
+                file_globs = test_globs
+            for file_glob in file_globs:
+                for test_file in glob.glob(file_glob):
                     if os.stat(test_file)[-2] < epoch_time:
                         os.remove(test_file)
             os.chdir(cwd)
@@ -743,11 +743,7 @@ args: command-line arguments passed to testcode2.
     if 'diff' in actions:
         diff_tests(tests, user_options['diff'], verbose)
     if 'tidy' in actions:
-        submit_templates = []
-        for test_program in test_programs.values():
-            if test_program.submit_template:
-                submit_templates.append(test_program.submit_template)
-        tidy_tests(tests, options.older_than, submit_templates)
+        tidy_tests(tests, options.older_than)
     if 'make-benchmarks' in actions:
         make_benchmarks(test_programs, tests, userconfig, start_time)
 
