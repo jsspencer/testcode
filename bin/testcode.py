@@ -468,21 +468,29 @@ verbose: level of verbosity in output.
         cwd = os.getcwd()
         os.chdir(test.path)
         for (inp, args) in test.inputs_args:
-            benchmark = testcode2.util.testcode_filename(
-                    testcode2.FILESTEM['benchmark'],
-                    test.test_program.benchmark, inp, args
-                    )
+            have_benchmark = True
+            try:
+                benchmark = test.test_program.select_benchmark_file(
+                        test.path, inp, args
+                        )
+            except testcode2.exceptions.TestCodeError:
+                err = sys.exc_info()[1]
+                have_benchmark = False
             test_file = testcode2.util.testcode_filename(
                     testcode2.FILESTEM['test'],
                     test.test_program.test_id, inp, args
                     )
-            if verbose > 0:
-                print('Diffing %s and %s in %s.' % (benchmark, test_file,
-                    test.path))
-            if not os.path.exists(test_file) or not os.path.exists(benchmark):
+            if not os.path.exists(test_file):
                 if verbose > 0:
-                    print('Skipping diff: %s does not exist.' % test_file)
+                    print('Skipping diff with %s in %s: %s does not exist.'
+                            % (benchmark, test.path, test_file))
+            elif not have_benchmark:
+                if verbose > 0:
+                    print('Skipping diff with %s. %s' % (test.path, err))
             else:
+                if verbose > 0:
+                    print('Diffing %s and %s in %s.' %
+                            (benchmark, test_file, test.path))
                 diff_cmd = '%s %s %s' % (diff_program, benchmark, test_file)
                 diff_popen = subprocess.Popen(diff_cmd, shell=True)
                 diff_popen.wait()
