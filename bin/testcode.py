@@ -313,7 +313,12 @@ run_test_args: arguments to pass to test.run_test method.
     executables = [test.test_program.exe for test in tests]
     executables = compat.compat_set(executables)
     for exe in executables:
-        if not os.path.exists(exe):
+        mswin = sys.platform.startswith('win') or sys.platform.startswith('cyg')
+        # The test is not reliable if there's an unholy combination of windows
+        # and cygwin being used to run the program.  We've already warned the
+        # user (in config.set_program_name) that we struggled to find the
+        # executable.
+        if not os.path.exists(exe) and not mswin:
             err = 'Executable does not exist: %s.' % (exe)
             raise testcode2.exceptions.TestCodeError(err)
 

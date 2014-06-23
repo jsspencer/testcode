@@ -476,5 +476,10 @@ the full path.
             # This still allows us to manipulate previously run tests, just not
             # run new ones...
             print('WARNING: cannot find program: %s.' % (program))
+            # Allow things to proceed with the original path -- the user might
+            # know what they're doing and the above tests are not always
+            # sufficient (e.g. if using cygwin but using an MPI implementation
+            # which requires a Windows-based path).
+            program_path = program
 
     return program_path
