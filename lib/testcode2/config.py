@@ -343,20 +343,20 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                 if not inp_files:
                     err = 'Cannot find input file %s in %s.' % (inp, path)
                     raise exceptions.TestCodeError(err)
+                # We use a glob for the input argument to avoid the
+                # case where the argument is empty and hence a pattern
+                # such as *.inp also matches files like
+                # test.out.test_id.inp=x.inp and hence considering
+                # previous output files to actually be an input file in
+                # their own right.
+                test_files = [
+                     util.testcode_filename(stem[1], '*', '*', arg)
+                     for stem in testcode2._FILESTEM_TUPLE
+                             ]
+                testcode_files = []
+                for tc_file in test_files:
+                    testcode_files.extend(glob.glob(tc_file))
                 for inp_file in inp_files:
-                    # We use a glob for the input argument to avoid the
-                    # case where the argument is empty and hence a pattern
-                    # such as *.inp also matches files like
-                    # test.out.test_id.inp=x.inp and hence considering
-                    # previous output files to actually be an input file in
-                    # their own right.
-                    test_files = [
-                         util.testcode_filename(stem[1], '*', '*', arg)
-                         for stem in testcode2._FILESTEM_TUPLE
-                                 ]
-                    testcode_files = []
-                    for tc_file in test_files:
-                        testcode_files.extend(glob.glob(tc_file))
                     if inp_file not in testcode_files:
                         inputs_args.append((inp_file, arg))
             else:
