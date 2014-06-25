@@ -59,11 +59,11 @@ Options
     section of the :ref:`userconfig` file.
 -c CATEGORY, --category=CATEGORY
     Select the category/group of tests.  Can be specified multiple times.
-    Any wildcard(s) are used to refer to test(s) by their path are expanded.
-    Default: use the `_default_` category if run is an action unless
-    make-benchmarks is an action.  All other cases use the `_all_` category by
-    default.  The `_default_` category contains all  tests unless otherwise set
-    in the :ref:`jobconfig` file.
+    Wildcards or parent directories can be used to select multiple directories
+    by their path.  Default: use the `_default_` category if run is an action
+    unless make-benchmarks is an action.  All other cases use the `_all_`
+    category by default.  The `_default_` category contains all  tests unless
+    otherwise set in the :ref:`jobconfig` file.
 -e EXECUTABLE, --executable=EXECUTABLE
     Set the executable(s) to be used to run the tests.  Can be  a path or name
     of an option in the :ref:`userconfig` file, in which case all test programs are

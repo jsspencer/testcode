@@ -438,12 +438,18 @@ def select_tests(all_tests, test_categories, selected_categories, prefix=''):
         # are stored .
         found = False
         cat_paths = glob.glob(os.path.join(prefix, cat))
+        parent = lambda pdir, cdir: os.path.commonprefix([pdir, cdir]) == pdir
         for test in all_tests:
             if cat == test.name:
                 found = True
                 tests.append(test)
             elif compat.compat_any(os.path.exists(path) and
                     os.path.samefile(path, test.path) for path in cat_paths):
+                found = True
+                tests.append(test)
+            elif compat.compat_any(parent(path, test.path)
+                    for path in cat_paths):
+                # test contained within a subdirectory of a cat_path.
                 found = True
                 tests.append(test)
         if not found:
