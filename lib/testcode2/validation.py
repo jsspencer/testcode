@@ -207,7 +207,15 @@ def compare_data(benchmark, test, default_tolerance, tolerances,
     ignored_params = compat.compat_set(ignore_fields or tuple())
     bench_params = compat.compat_set(benchmark) - ignored_params
     test_params = compat.compat_set(test) - ignored_params
+    # Check both the key names and the number of keys in case there are
+    # different numbers of duplicate keys.
     comparable = (bench_params == test_params)
+    key_counts = dict((key,0) for key in bench_params | test_params)
+    for (key, val) in benchmark.items():
+        key_counts[key] += len(val)
+    for (key, val) in test.items():
+        key_counts[key] -= len(val)
+    comparable = comparable and compat.compat_all(kc == 0 for kc in key_counts.values())
     status = Status()
     msg = []
     
@@ -220,6 +228,12 @@ def compare_data(benchmark, test, default_tolerance, tolerances,
             msg.append("    Data only in benchmark: %s." % ", ".join(bench_only))
         if test_only:
             msg.append("    Data only in test: %s." % ", ".join(test_only))
+        bench_more = [key for key in key_counts if key_counts[key] > 0]
+        test_more = [key for key in key_counts if key_counts[key] < 0]
+        if bench_more:
+            msg.append("    More data in benchmark: %s." % ", ".join(bench_more))
+        if test_more:
+            msg.append("    More data in test: %s." % ", ".join(test_more))
 
     for param in (bench_params & test_params):
         tol = tolerances.get(param, default_tolerance)
