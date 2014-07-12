@@ -82,13 +82,16 @@ test_programs: dict of the test programs defined in userconfig.
 tests: list of selected tests.
 '''
 
+    config_exists = os.path.exists(userconfig) and os.path.exists(jobconfig)
+
     try:
         (user_options, test_programs) = testcode2.config.parse_userconfig(
                 userconfig, executables, test_id, userconfig_options)
     except testcode2.exceptions.TestCodeError:
-        err = str(sys.exc_info()[1]) + ('  Please run from a directory'
-                               ' containing (or specify) the userconfig file.'
-                               '  Use ``--help`` to see available options.')
+        err = str(sys.exc_info()[1])
+        if not config_exists:
+            err += (' Please run from a directory containing (or specify) the '
+                    'userconfig file. Use ``--help`` to see available options.')
         raise testcode2.exceptions.TestCodeError(err)
 
     # Set benchmark if required.
@@ -100,9 +103,10 @@ tests: list of selected tests.
         (tests, test_categories) = testcode2.config.parse_jobconfig(
                 jobconfig, user_options, test_programs, jobconfig_options)
     except testcode2.exceptions.TestCodeError:
-        err = str(sys.exc_info()[1]) + ('  Please run from a directory'
-                               ' containing (or specify) the jobconfig file.'
-                               '  Use ``--help`` to see available options.')
+        err = str(sys.exc_info()[1])
+        if not config_exists:
+            err += (' Please run from a directory containing (or specify) the '
+                    'jobconfig file. Use ``--help`` to see available options.')
         raise testcode2.exceptions.TestCodeError(err)
 
     # Set number of processors...
