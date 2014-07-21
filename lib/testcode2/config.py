@@ -48,7 +48,7 @@ def parse_tolerance_tuple(val):
         abs_tol = val[0]
     else:
         abs_tol = None
-    return (name, validation.Tolerance(abs_tol, rel_tol, strict))
+    return (name, validation.Tolerance(name, abs_tol, rel_tol, strict))
 
 def parse_userconfig(config_file, executables=None, test_id=None,
         settings=None):

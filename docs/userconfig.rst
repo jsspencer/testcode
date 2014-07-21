@@ -209,6 +209,13 @@ respectively and sets the default tolerance to be non-strict except for the
 10^-10.  If only one of the tolerances is set, then the strict and non-strict
 settings are equivalent.
 
+Alternatively, the tolerance can be labelled by a regular expression, in which case any
+data labels which match the regular expression will use that tolerance unless there is
+a tolerance with that specific label (i.e. exact matches override a regular
+expression match).  Note that this is the case even if the tolerance using the exact
+tolerance is defined in :ref:`userconfig` and the regular expression match is
+defined in :ref:`jobconfig`.
+
 .. _skip:
 
 Skipping tests

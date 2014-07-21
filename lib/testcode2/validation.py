@@ -8,7 +8,9 @@ Classes and functions for comparing data.
 :license: modified BSD; see LICENSE for more details.
 '''
 
+import re
 import sys
+import warnings
 
 import testcode2.ansi as ansi
 import testcode2.compatibility as compat
@@ -104,11 +106,13 @@ class Tolerance:
 
 Given are regarded as equal if they are within these tolerances.
 
+name: name of tolerance object.
 absolute: threshold for absolute difference between two numbers.
 relative: threshold for relative difference between two numbers.
 strict: if true, then require numbers to be within both thresholds.
 '''
-    def __init__(self, absolute=None, relative=None, strict=True):
+    def __init__(self, name='', absolute=None, relative=None, strict=True):
+        self.name = name
         self.absolute = absolute
         self.relative = relative
         if not self.absolute and not self.relative:
@@ -236,9 +240,18 @@ def compare_data(benchmark, test, default_tolerance, tolerances,
             msg.append("    More data in test: %s." % ", ".join(test_more))
 
     for param in (bench_params & test_params):
-        tol = tolerances.get(param, default_tolerance)
+        param_tol = tolerances.get(param, default_tolerance)
+        if param_tol == default_tolerance:
+            # See if there's a regex that matches.
+            tol_matches = [tol for tol in tolerances.values()
+                               if tol.name and re.match(tol.name, param)]
+            if tol_matches:
+                param_tol = tol_matches[0]
+                if len(tol_matches) > 1:
+                    warnings.warn('Multiple tolerance regexes match.  '
+                                  'Using %s.' % (param_tol.name))
         for bench_value, test_value in zip(benchmark[param], test[param]):
-            key_status, err = tol.validate(test_value, bench_value, param)
+            key_status, err = param_tol.validate(test_value, bench_value, param)
             status += key_status
             if not key_status.passed() and err:
                 msg.append(err)
