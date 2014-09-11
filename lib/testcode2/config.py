@@ -278,15 +278,14 @@ config_file: location of the jobconfig file, either relative or absolute.'''
             # This means we can't just use test_dict to update the relevant
             # dictionary in test_info.
             tol = None
-            if path in test_info:
+            if (name, path) in test_info:
                 # Just update existing info.
-                test = test_info[path]
+                test = test_info[(name, path)]
                 if  'tolerances' in test_dict:
-                    test[2]['tolerances'].update(test_dict['tolerances'])
+                    test[1]['tolerances'].update(test_dict['tolerances'])
                     tol = test_dict.pop('tolerances')
                 test[0] = test_program
-                test[1] = path
-                test[2].update(test_dict)
+                test[1].update(test_dict)
                 if tol:
                     test_dict['tolerances'] = tol
             else:
@@ -312,11 +311,11 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                 # restore tolerances for next test in the glob.
                 if tol:
                     test_dict['tolerances'] = tol
-                test_info[path] = [test_program, name, copy.deepcopy(test)]
+                test_info[(name, path)] = [test_program, copy.deepcopy(test)]
 
     # Now create the tests (after finding out what the input files are).
     tests = []
-    for (path, (test_program, name, test_dict)) in test_info.items():
+    for ((name, path), (test_program, test_dict)) in test_info.items():
         old_dir = os.getcwd()
         os.chdir(path)
         # Expand any globs in the input files.
