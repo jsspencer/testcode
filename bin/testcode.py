@@ -652,9 +652,11 @@ final: final call (so print a goodbye messge).
         subset_fmt = []
         for (name, path) in subset:
             if os.path.abspath(name) == os.path.abspath(path):
-                subset_fmt.append(name)
+                entry = name
             else:
-                subset_fmt.append('%s (test name: %s)' % (path, name))
+                entry = '%s (test name: %s)' % (path, name)
+            if entry not in subset_fmt:
+                subset_fmt.append(entry)
         return subset_fmt
 
     statuses = [test.get_status() for test in tests]
