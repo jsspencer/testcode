@@ -121,6 +121,11 @@ strict: if true, then require numbers to be within both thresholds.
         self.strict = strict
     def __repr__(self):
         return (self.absolute, self.relative, self.strict).__repr__()
+    def __hash__(self):
+        return hash(self.name)
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__) and
+                self.__dict__ == other.__dict__)
     def validate(self, test_val, benchmark_val, key=''):
         '''Compare test and benchmark values to within the tolerances.'''
         status = Status([True])

@@ -218,6 +218,20 @@ class Test:
         self.verify_job = DIR_LOCK.in_dir(self.path)(self._verify_job)
         self.skip_job = DIR_LOCK.in_dir(self.path)(self._skip_job)
 
+    def __hash__(self):
+        return hash(self.path)
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        else:
+            # Compare values we care about...
+            cmp_vals = ['test_program', 'path', 'inputs_args', 'output',
+                        'nprocs', 'min_nprocs', 'max_nprocs', 'submit_template',
+                        'default_tolerance', 'tolerances', 'status']
+            comparison = tuple(getattr(other, cmp_val) == getattr(self, cmp_val) for cmp_val in cmp_vals)
+            return compat.compat_all(comparison)
+
     def run_test(self, verbose=1, cluster_queue=None, rundir=None):
         '''Run all jobs in test.'''
 
