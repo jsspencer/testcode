@@ -232,12 +232,16 @@ def compare_data(benchmark, test, default_tolerance, tolerances,
             msg.append("    Data only in benchmark: %s." % ", ".join(bench_only))
         if test_only:
             msg.append("    Data only in test: %s." % ", ".join(test_only))
-        bench_more = [key for key in key_counts if key_counts[key] > 0]
-        test_more = [key for key in key_counts if key_counts[key] < 0]
+        bench_more = [key for key in key_counts
+                        if key_counts[key] > 0 and key not in bench_only]
+        test_more = [key for key in key_counts
+                        if key_counts[key] < 0 and key not in test_only]
         if bench_more:
-            msg.append("    More data in benchmark: %s." % ", ".join(bench_more))
+            msg.append("    More data in benchmark than in test: %s." %
+                           ", ".join(bench_more))
         if test_more:
-            msg.append("    More data in test: %s." % ", ".join(test_more))
+            msg.append("    More data in test than in benchmark: %s." %
+                           ", ".join(test_more))
 
     for param in (bench_params & test_params):
         param_tol = tolerances.get(param, default_tolerance)
