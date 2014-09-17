@@ -221,9 +221,11 @@ def compare_data(benchmark, test, default_tolerance, tolerances,
     comparable = (bench_params == test_params)
     key_counts = dict((key,0) for key in bench_params | test_params)
     for (key, val) in benchmark.items():
-        key_counts[key] += len(val)
+        if key not in ignored_params:
+            key_counts[key] += len(val)
     for (key, val) in test.items():
-        key_counts[key] -= len(val)
+        if key not in ignored_params:
+            key_counts[key] -= len(val)
     comparable = comparable and compat.compat_all(kc == 0 for kc in key_counts.values())
     status = Status()
     msg = []
