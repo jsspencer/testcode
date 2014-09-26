@@ -13,6 +13,7 @@ import glob
 import os
 import subprocess
 import time
+import warnings
 
 import testcode2
 import testcode2.compatibility as compat
@@ -341,7 +342,8 @@ config_file: location of the jobconfig file, either relative or absolute.'''
                 inp_files = sorted(glob.glob(inp))
                 if not inp_files:
                     err = 'Cannot find input file %s in %s.' % (inp, path)
-                    raise exceptions.TestCodeError(err)
+                    warnings.warn(err)
+                    continue
                 # We use a glob for the input argument to avoid the
                 # case where the argument is empty and hence a pattern
                 # such as *.inp also matches files like
