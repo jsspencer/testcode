@@ -63,7 +63,7 @@ submit_template [string]
     command(s) to run the test.  The submit script must do all other actions (e.g.
     setting environment variables, loading modules, copying files from the test
     directory to a local disk and copying files back afterwards).  No default.
-test_program [string]
+program [string]
     Program name (appropriate section heading in :ref:`userconfig`) to use to
     run the test.  Default: specified in the [user] section of
     :ref:`userconfig`.
