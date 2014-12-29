@@ -164,11 +164,15 @@ actions: list of testcode2 actions to run.
             'the _all_ category by default.  The _default_ category contains '
             'all  tests unless otherwise set in the jobconfig file.')
     parser.add_option('-e', '--executable', action='append', default=[],
-            help='Set the executable(s) to be used to run the tests.  Can be '
+            help='Set the executable(s) to be used to run the tests.  Can be'
             ' a path or name of an option in the userconfig file, in which'
             ' case all test programs are set to use that value, or in the'
             ' format program_name=value, which affects only the specified'
             ' program.')
+    parser.add_option('-i', '--insert', action='store_true', default=False,
+            help='Insert the new benchmark into the existing list of benchmarks'
+            ' in userconfig rather than overwriting it.  Only relevant to the'
+            ' make-benchmarks action.  Default: %default.')
     parser.add_option('--jobconfig', default='jobconfig', help='Set path to the'
             ' job configuration file.  Default: %default.')
     parser.add_option('--job-option', action='append', dest='job_option',
@@ -540,7 +544,8 @@ ndays: test files older than ndays are deleted.
                         os.remove(test_file)
             os.chdir(cwd)
 
-def make_benchmarks(test_programs, tests, userconfig, copy_files_since):
+def make_benchmarks(test_programs, tests, userconfig, copy_files_since,
+        insert_id=False):
     '''Make a new set of benchmarks.
 
 test_programs: dictionary of test programs.
@@ -548,6 +553,9 @@ tests: list of tests.
 userconfig: path to the userconfig file.  This is updated with the new benchmark id.
 copy_files_since: files produced since the timestamp (in seconds since the
     epoch) are copied to the testcode_data subdirectory in each test.
+insert_id: insert the new benchmark id into the existing list of benchmark ids in
+    userconfig if True, otherwise overwrite the existing benchmark ids with the
+    new benchmark id (default).
 '''
 
     # All tests passed?
@@ -588,10 +596,21 @@ copy_files_since: files produced since the timestamp (in seconds since the
 
     # update userconfig file.
     if userconfig:
-        print('Setting new benchmark in userconfig to be %s.' % (benchmark))
         config = testcode2.compatibility.configparser.RawConfigParser()
         config.optionxform = str # Case sensitive file.
         config.read(userconfig)
+        if insert_id:
+            ids = config.get('user', 'benchmark').split()
+            if benchmark in ids:
+                ids.remove(benchmark)
+            ids.insert(0, benchmark)
+            benchmark = ' '.join(ids)
+        if len(benchmark.split()) > 1:
+            print('Setting new benchmarks in userconfig to be: %s.' %
+                    (benchmark))
+        else:
+            print('Setting new benchmark in userconfig to be: %s.' %
+                    (benchmark))
         config.set('user', 'benchmark', benchmark)
         userconfig = open(userconfig, 'w')
         config.write(userconfig)
@@ -764,7 +783,8 @@ args: command-line arguments passed to testcode2.
     if 'tidy' in actions:
         tidy_tests(tests, options.older_than)
     if 'make-benchmarks' in actions:
-        make_benchmarks(test_programs, tests, userconfig, start_time)
+        make_benchmarks(test_programs, tests, userconfig, start_time,
+                options.insert)
 
     return ret_val
 

@@ -70,6 +70,10 @@ Options
     set to use that value, or in the format program_name=value, which affects
     only the specified program.  Only relevant to the run action.  Default: exe
     variable set for each program listed in the :ref:`userconfig` file.
+-i, --insert
+    Insert the new benchmark into the existing list of benchmarks in userconfig
+    rather than overwriting it.  Only relevant to the make-benchmarks action.
+    Default: False.
 --jobconfig=JOBCONFIG
     Set path to the job configuration file.  Default: jobconfig.
 --job-option=JOB_OPTION
