@@ -169,6 +169,10 @@ actions: list of testcode2 actions to run.
             ' case all test programs are set to use that value, or in the'
             ' format program_name=value, which affects only the specified'
             ' program.')
+    parser.add_option('-f', '--first-run', action='store_true', default=False,
+            dest='first_run', help='Run tests that were not were not run in '
+            'the previous testcode run.  Only relevant to the recheck action.  '
+            'Default: %default.')
     parser.add_option('-i', '--insert', action='store_true', default=False,
             help='Insert the new benchmark into the existing list of benchmarks'
             ' in userconfig rather than overwriting it.  Only relevant to the'
@@ -421,7 +425,8 @@ number of tests not checked due to test output file not existing.
 
     return not_checked
 
-def recheck_tests(tests, verbose=1, cluster_queue=None, tot_nprocs=0):
+def recheck_tests(tests, verbose=1, cluster_queue=None, tot_nprocs=0,
+                  first_run=False):
     '''Check tests and re-run any failed/skipped tests.
 
 tests: list of tests.
@@ -434,6 +439,7 @@ tot_nprocs: total number of processors available to run tests on.  As many
     cluster_queue is specified, then all tests are submitted to the cluster at
     the same time.  If less than one and cluster_queue is not set, then
     tot_nprocs is ignored and the tests are run sequentially (default).
+first_run: if true, run tests that were not run in the previous invocation.
 
 Returns:
 
@@ -455,6 +461,10 @@ not_checked: number of tests not checked due to missing test output.
     for test in tests:
         stat = test.get_status()
         if sum(stat[key] for key in ('failed', 'unknown')) != 0:
+            # Tests which failed or are unknown should be rerun.
+            rerun_tests.append(test)
+        elif stat['ran'] == 0 and first_run:
+            # Or if they were never run and want to be run...
             rerun_tests.append(test)
         elif stat['ran'] != 0:
             # mark tests as skipped using an internal API (naughty!)
@@ -772,8 +782,8 @@ args: command-line arguments passed to testcode2.
         run_tests(tests, verbose, options.queue_system, options.tot_nprocs)
         ret_val = end_status(tests, 0, verbose)
     if 'recheck' in actions:
-        not_checked = recheck_tests(tests, verbose,
-                                        options.queue_system,options.tot_nprocs)
+        not_checked = recheck_tests(tests, verbose, options.queue_system,
+                                    options.tot_nprocs, options.first_run)
         ret_val = end_status(tests, not_checked, verbose)
     if 'compare' in actions:
         not_checked = compare_tests(tests, verbose)

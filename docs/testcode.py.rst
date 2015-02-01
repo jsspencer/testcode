@@ -70,6 +70,9 @@ Options
     set to use that value, or in the format program_name=value, which affects
     only the specified program.  Only relevant to the run action.  Default: exe
     variable set for each program listed in the :ref:`userconfig` file.
+-f, --first-run
+    Run tests that were not were not run in the previous testcode run.  Only
+    relevant to the recheck action.  Default: False.
 -i, --insert
     Insert the new benchmark into the existing list of benchmarks in userconfig
     rather than overwriting it.  Only relevant to the make-benchmarks action.
