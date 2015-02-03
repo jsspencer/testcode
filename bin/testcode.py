@@ -12,8 +12,8 @@ Available actions:
   diff                  diff set of test outputs from a previous testcode
                         run against the benchmark outputs.
   make-benchmarks       create a new set of benchmarks and update the userconfig
-                        file with the new benchmark id.  Also runs the 'run'
-                        action unless the 'compare' action is also given.
+                        file with the new benchmark id.  Also forces the tests
+                        to be run unless the 'compare' action is also given.
   recheck               compare a set of test outputs and rerun failed tests.
   run                   run a set of tests and compare against the benchmark
                         outputs.  Default action.
@@ -217,7 +217,7 @@ actions: list of testcode2 actions to run.
 
     # Default action.
     if not args or ('make-benchmarks' in args and 'compare' not in args
-            and 'run' not in args):
+            and 'run' not in args and 'recheck' not in args):
         # Run tests by default if no action provided.
         # Run tests before creating benchmark by default.
         args.append('run')

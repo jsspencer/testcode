@@ -38,7 +38,7 @@ diff
 make-benchmarks
     create a new set of benchmarks and update the :ref:`userconfig` file with
     the new benchmark id.  Also runs the 'run' action unless the 'compare'
-    action is also given.
+    action or 'recheck' action is also given.
 recheck
     compare set of test outputs from a previous testcode run against
     benchmark outputs and rerun any failed tests.
