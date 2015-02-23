@@ -436,7 +436,7 @@ def select_tests(all_tests, test_categories, selected_categories, prefix=''):
     tests = []
     parent = lambda pdir, cdir: \
             not os.path.relpath(cdir, start=pdir).startswith(os.pardir)
-    for cat in selected_categories:
+    for cat in compat.compat_set(selected_categories):
         # test paths are relative to the config directory but absolute paths
         # are stored .
         found = False
