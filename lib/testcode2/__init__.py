@@ -14,12 +14,19 @@ import pipes
 import shutil
 import subprocess
 import sys
+import warnings
 
 try:
     import yaml
     _HAVE_YAML = True
 except ImportError:
     _HAVE_YAML = False
+
+try:
+    import importlib
+    _HAVE_IMPORTLIB_ = True
+except ImportError:
+    _HAVE_IMPORTLIB_ = False
 
 import testcode2.dir_lock as dir_lock
 import testcode2.exceptions as exceptions
@@ -74,6 +81,7 @@ class TestProgram:
         self.skip_program = None
         self.skip_args = ''
         self.verify = False
+        self.extract_fn = None
 
         # Info
         self.vcs = None
@@ -86,6 +94,21 @@ class TestProgram:
         # extract command template.
         if self.verify and 'extract_cmd_template' not in kwargs:
             self.extract_cmd_template = 'tc.extract tc.args tc.test tc.bench'
+
+        if self.extract_fn:
+            if _HAVE_IMPORTLIB_:
+                self.extract_fn = self.extract_fn.split()
+                if len(self.extract_fn) == 2:
+                    sys.path.append(self.extract_fn[0])
+                (mod, fn) = self.extract_fn[-1].rsplit('.', 1)
+                mod = importlib.import_module(mod)
+                self.extract_fn = mod.__getattribute__(fn)
+            elif self.extract_program:
+                warnings.warn('importlib not available.  Will attempt to '
+                              'analyse data via an external script.')
+            else:
+                raise exceptions.TestCodeError('importlib not available and '
+                              'no data extraction program supplied.')
 
         # Can we actually extract the data?
         if self.extract_fmt == 'yaml' and not _HAVE_YAML:
@@ -530,18 +553,24 @@ Assume function is executed in self.path.'''
 
 Assume function is executed in self.path.'''
         tp_ptr = self.test_program
+        data_files = [
+                      tp_ptr.select_benchmark_file(self.path, input_file, args),
+                      util.testcode_filename(FILESTEM['test'],
+                      tp_ptr.test_id, input_file, args),
+                     ]
         if tp_ptr.data_tag:
             # Using internal data extraction function.
-            data_files = [
-                    tp_ptr.select_benchmark_file(self.path, input_file, args),
-                    util.testcode_filename(FILESTEM['test'],
-                            tp_ptr.test_id, input_file, args),
-                         ]
             if verbose > 2:
                 print('Analysing output using data_tag %s in %s on files %s.' %
                         (tp_ptr.data_tag, self.path, ' and '.join(data_files)))
             outputs = [util.extract_tagged_data(tp_ptr.data_tag, dfile)
                     for dfile in data_files]
+        elif tp_ptr.extract_fn:
+            if verbose > 2:
+                print('Analysing output using function %s in %s on files %s.' %
+                        (tp_ptr.extract_fn.__name__, self.path,
+                         ' and '.join(data_files)))
+            outputs = [tp_ptr.extract_fn(dfile) for dfile in data_files]
         else:
             # Using external data extraction script.
             # Get extraction commands.

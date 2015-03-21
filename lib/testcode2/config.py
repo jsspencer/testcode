@@ -103,8 +103,8 @@ config_file: location of the userconfig file, either relative or absolute.'''
 
     test_program_options = ('run_cmd_template',
         'launch_parallel', 'ignore_fields', 'data_tag', 'extract_cmd_template',
-        'extract_program', 'extract_args', 'extract_fmt', 'verify', 'vcs',
-        'skip_program', 'skip_args', 'skip_cmd_template')
+        'extract_fn', 'extract_program', 'extract_args', 'extract_fmt',
+        'verify', 'vcs', 'skip_program', 'skip_args', 'skip_cmd_template')
     default_test_options = ('inputs_args', 'output', 'nprocs',
         'min_nprocs', 'max_nprocs', 'submit_template',)
     test_programs = {}

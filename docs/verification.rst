@@ -7,7 +7,7 @@ testcode compares selected data from an output with previously obtained output
 (the 'benchmark'); a test passes if all data is within a desired tolerance.
 The data can be compared using an absolute tolerance and/or a relative
 tolerance.  testcode needs some way of knowing what data from the output files
-should be validated.  There are three options.
+should be validated.  There are four options.
 
 * label output with a 'data tag'
 
@@ -23,6 +23,31 @@ should be validated.  There are three options.
   benchmark output.  The text preceding the value is used to label that data
   item; lines with identical text but different values are handled but it is
   assumed that such lines always come in the same (relative) order.
+
+* user-supplied data extraction python function
+
+  An arbitrary python module can be imported and a function contained in the
+  module called with a test or benchmark output filename as its sole argument.
+  The function must return the extracted data from the output file as a python
+  dict with keys labelling each data item (corresponding to the keys used for
+  setting tolerances) and lists or tuples as values containing the data to be
+  compared.  For example::
+
+      {
+        'val 1': [1.2, 8.7],
+        'val 2': [2, 4],
+        'val 3': [3.32, 17.2],
+      }
+
+  Each entry need not contain the same amount of data::
+
+      {
+        'val 1': [1.2, 8.7],
+        'val 2': [2, 4],
+        'val 3': [3.32, 17.2],
+        'val 4': [11.22],
+        'val 5': [221.0],
+      }
 
 * user-supplied data extraction program
 
