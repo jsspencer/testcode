@@ -54,7 +54,8 @@ ignore_fields [space-separated list of strings]
     Specify the fields (e.g. column headings in the output from the extraction
     program) to ignore.  This can be used to include, say, timing information
     in the test output for performance comparison without causing failure of
-    tests.  No default.
+    tests.  Spaces within a string can be escaped by quoting the string.  No
+    default.
 exe [string]
     Path to the program executable.  No default.
 extract_fn [string]

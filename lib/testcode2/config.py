@@ -11,6 +11,7 @@ Parse jobconfig and userconfig ini files.
 import copy
 import glob
 import os
+import shlex
 import subprocess
 import time
 import warnings
@@ -116,7 +117,7 @@ config_file: location of the userconfig file, either relative or absolute.'''
             if userconfig.has_option(section, item):
                 tp_dict[item] = userconfig.get(section, item)
         if 'ignore_fields' in tp_dict:
-            tp_dict['ignore_fields'] = tp_dict['ignore_fields'].split()
+            tp_dict['ignore_fields'] = shlex.split(tp_dict['ignore_fields'])
         if section in executables:
             exe = executables[section]
         elif '_tc_all' in executables:
