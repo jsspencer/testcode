@@ -738,7 +738,7 @@ final: final call (so print a goodbye messge).
             print('Failed %s in:\n\t%s' % (failed_test, '\n\t'.join(failures)))
         if warnings:
             print('%s in:\n\t%s' % (warning.title(), '\n\t'.join(warnings)))
-        if skipped:
+        if skipped and verbose > 1:
             print('Skipped %s in:\n\t%s' % (skipped_test, '\n\t'.join(skipped)))
     else:
         print(' [%s/%s%s]'% (npassed, nran, add_info_msg))
