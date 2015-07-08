@@ -168,10 +168,13 @@ class TestProgram:
         '''Create skip command.'''
         test_file = util.testcode_filename(FILESTEM['test'], self.test_id,
                 input_file, args)
+        error_file = util.testcode_filename(FILESTEM['error'], self.test_id,
+                input_file, args)
         cmd = self.skip_cmd_template
         cmd = cmd.replace('tc.skip', pipes.quote(self.skip_program))
         cmd = cmd.replace('tc.args', self.skip_args)
         cmd = cmd.replace('tc.test', pipes.quote(test_file))
+        cmd = cmd.replace('tc.error', pipes.quote(error_file))
         return cmd
 
     def select_benchmark_file(self, path, input_file, args):

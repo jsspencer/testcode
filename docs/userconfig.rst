@@ -135,6 +135,8 @@ skip_cmd_template [string]
             replaced with skip_args.
         tc.test
             replaced with the filename of the test output.
+        tc.error
+            replaced with the filename for the error output.
 
     Default: tc.skip tc.args tc.test.
 skip_program [string]
