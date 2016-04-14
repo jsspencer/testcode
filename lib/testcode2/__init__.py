@@ -106,6 +106,7 @@ class TestProgram:
             elif self.extract_program:
                 warnings.warn('importlib not available.  Will attempt to '
                               'analyse data via an external script.')
+                self.extract_fn = None
             else:
                 raise exceptions.TestCodeError('importlib not available and '
                               'no data extraction program supplied.')
