@@ -329,6 +329,7 @@ class Test:
                         raise exceptions.RunError(err[0])
                     else:
                         self.verify_job(test_input, test_arg, verbose, rundir)
+                sys.stdout.flush()
         except exceptions.RunError:
             err = sys.exc_info()[1]
             if verbose > 2:
@@ -356,6 +357,7 @@ class Test:
                                                    test_arg, rundir)
                         sys.stdout.write(info_line)
                     status.print_status(err, verbose)
+                sys.stdout.flush()
 
     def _start_job(self, cmd, cluster_queue=None, verbose=1):
         '''Start test running.  Requires directory lock.
