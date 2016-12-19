@@ -116,8 +116,8 @@ run_cmd_template [string]
             replaced with the number of processors the test is run on.
 
     Default: 'tc.program tc.args tc.input > tc.output 2> tc.error' in serial
-    and 'launch_command tc.program tc.args tc.input > tc.output 2> tc.error' in
-    parallel, where launch_command is specified above.  The parallel version is
+    and 'launch_parallel tc.program tc.args tc.input > tc.output 2> tc.error' in
+    parallel, where launch_parallel is specified above.  The parallel version is
     only used if the number of processors to run a test on is greater than
     zero.
 skip_args [string]
