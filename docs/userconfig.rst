@@ -92,10 +92,10 @@ extract_fmt [string]
     Format of the data returned by extraction program. See :ref:`verification`
     for more details.  Can only take values table or yaml.  Default: table.
 launch_parallel [string]
-    Command template used to run the test program in parallel.  tc.nprocs is
-    replaced with the number of processors a test uses (see run_cmd_template).
-    If tc.nprocs does not appear, then testcode has no control over the number
-    of processors a test is run on.  Default: mpirun -np tc.nprocs.
+    Command template inserted before run_cmd_template when running the test program in
+    parallel.  tc.nprocs is replaced with the number of processors a test uses (see
+    run_cmd_template).  If tc.nprocs does not appear, then testcode has no control over
+    the number of processors a test is run on.  Default: mpirun -np tc.nprocs.
 run_cmd_template [string]
     Template of command used to run the program on the test with the following
     substitutions made:
@@ -115,11 +115,11 @@ run_cmd_template [string]
         tc.nprocs
             replaced with the number of processors the test is run on.
 
-    Default: 'tc.program tc.args tc.input > tc.output 2> tc.error' in serial
-    and 'launch_parallel tc.program tc.args tc.input > tc.output 2> tc.error' in
-    parallel, where launch_parallel is specified above.  The parallel version is
-    only used if the number of processors to run a test on is greater than
-    zero.
+    Default: 'tc.program tc.args tc.input > tc.output 2> tc.error'.  The complete command
+    used to invoke the program is run_cmd_template in serial runs and launch_parallel
+    run_cmd_template in parallel runs, where launch_parallel is specified above.  The
+    parallel version is only used if the number of processors to run a test on is greater
+    than zero.
 skip_args [string]
     Arguments to supply to the program to test whether to skip the comparison
     of the test and benchmark.  Default: null string.
