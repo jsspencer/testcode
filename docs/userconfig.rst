@@ -152,6 +152,11 @@ verify [boolean]
     True if the extraction program compares the benchmark and test
     outputs directly.  See :ref:`verification` for more details.  Default:
     False.
+can_fail [boolean]
+    If True, the exit code of the executable is not checked. Otherwise,
+    the test will fail if the error code is not zero. Useful to be set
+    if you want to check an expected failure, e.g. to see that the code
+    crashes if the provided input is invalid. Default: False.
 vcs [string]
     Version control system used for the source code.  This is used to
     label the benchmarks.  The program binary is assumed to be in the same
@@ -172,7 +177,7 @@ for all tests of this type:
 * min_nprocs (default: 0)
 * max_nprocs (default: 2^31-1 or 2^63-1)
 * output (no default)
-* run_concurrent (defailt: false)
+* run_concurrent (default: false)
 * submit_template
 
 See :ref:`jobconfig` for more details.
