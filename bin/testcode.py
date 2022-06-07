@@ -212,6 +212,8 @@ actions: list of testcode2 actions to run.
     parser.add_option('-v', '--verbose', default=1, action="count", 
             dest='verbose', help='Increase verbosity of output.  Can be '
             'specified multiple times.')
+    parser.add_option('--force', default=False, action='store_true',
+             help='Confirm deleting files older than X days without prompt.') 
 
     (options, args) = parser.parse_args(args)
 
@@ -519,24 +521,28 @@ verbose: level of verbosity in output.
                 diff_popen.wait()
         os.chdir(cwd)
 
-def tidy_tests(tests, ndays):
+def tidy_tests(tests, ndays, force=False):
     '''Tidy up test directories.
 
 tests: list of tests.
 ndays: test files older than ndays are deleted.
+force: delete files without user confirmation
 '''
 
     epoch_time = time.time() - 86400*ndays
 
     test_globs = ['test.out*','test.err*']
 
-    print(
-            'Delete all %s files older than %s days from each job directory?'
-                % (' '.join(test_globs), ndays)
-         )
-    ans = ''
-    while ans != 'y' and ans != 'n':
-        ans = testcode2.compatibility.compat_input('Confirm [y/n]: ')
+    if force:
+        ans = 'y'
+    else:
+        print(
+                'Delete all %s files older than %s days from each job directory?'
+                    % (' '.join(test_globs), ndays)
+            )
+        ans = ''
+        while ans != 'y' and ans != 'n':
+            ans = testcode2.compatibility.compat_input('Confirm [y/n]: ')
 
     if ans == 'n':
         print('No files deleted.')
@@ -791,7 +797,7 @@ args: command-line arguments passed to testcode2.
     if 'diff' in actions:
         diff_tests(tests, user_options['diff'], verbose)
     if 'tidy' in actions:
-        tidy_tests(tests, options.older_than)
+        tidy_tests(tests, options.older_than, options.force)
     if 'make-benchmarks' in actions:
         make_benchmarks(test_programs, tests, userconfig, start_time,
                 options.insert)
